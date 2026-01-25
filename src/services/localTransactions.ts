@@ -19,12 +19,11 @@ export const getTransactions = (): Transaction[] => {
 }
 
 
-export const addTransaction = (tx : Omit<Transaction, 'id' | 'date'>) => {
+export const addTransaction = (tx : Omit<Transaction, 'id'>) => {
     const list = getTransactions();
 
     const newTx: Transaction ={
         id: uuidv4(),
-        date: new Date().toISOString(),
         ...tx
     }
 
