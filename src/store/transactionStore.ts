@@ -8,7 +8,7 @@ import { Transaction } from "../type/transaction";
 
 type TransactionStore = {
     transactions: Transaction[];
-    addTransaction: (tx: Omit<Transaction, 'id' | 'date'>) => void;
+    addTransaction: (tx: Omit<Transaction, 'id'>) => void;
     deleteTransaction: (id: string) => void;
     loadTransactions: () => void;
 }

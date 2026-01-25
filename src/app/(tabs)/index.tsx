@@ -1,6 +1,7 @@
 import { useTransactionStore } from "@/src/store/transactionStore";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Button, FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 
 
 export default function Home (){
@@ -22,34 +23,50 @@ export default function Home (){
 
         <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Total Balance</Text>
-            <Text style={styles.balanceAmount}>${(totalIncome - totalExpense).toFixed(2)}</Text>    
+            <Text style={styles.balanceAmount}>₹ {(totalIncome - totalExpense).toFixed(2)}</Text>    
         </View>
 
         <View style={styles.row}>
             <View style={[styles.card, styles.incomeCard]}>
                 <Text>Income</Text>
-                <Text style={styles.amount}>${totalIncome.toFixed(2)}</Text>
+                <Text style={styles.amount}>₹ {totalIncome.toFixed(2)}</Text>
             </View>
             <View style={[styles.card, styles.expenseCard]}>
                 <Text>Expense</Text>
-                <Text style={styles.amount}>${totalExpense.toFixed(2)}</Text>
+                <Text style={styles.amount}>₹ {totalExpense.toFixed(2)}</Text>
             </View>
         </View>
 
-        <Button title="➕ Add Transaction" onPress={() => router.push("/add-transaction")} />
+        {/* <Button title="➕ Add Transaction" onPress={() => router.push("/add")} /> */}
 
-          <FlatList
+        <FlatList
           data={transactions}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View>
-              <Text>{item.title} - {item.amount}</Text>
-              <Button
-                title="Delete"
-                onPress={() => deleteTransaction(item.id)}
-              />
-              
+            <View style={{...styles.txContainer}}>
+              <View>
+                <Text style={styles.txRowHeader}>
+                  {item.date.toString().slice(8, 10)}
+                </Text>
+              </View>
+              <View style={styles.txContentRow}>
+                <View style={styles.txTextContainer}>
+                  <Text
+                    style={styles.txSingleLine}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    <Text style={styles.txCategory}>{item.category} </Text>
+                    <Text >{item.title} </Text>
+                    <Text >₹{item.amount} </Text>
+                  </Text>
+                </View>
 
+                <Ionicons name="trash" size={20} color="red"
+                  title="Delete"
+                  onPress={() => deleteTransaction(item.id)}
+                />
+              </View>
             </View>
           )}
         />
@@ -87,10 +104,35 @@ const styles = StyleSheet.create({
 
   amount: { fontSize: 18, fontWeight: "bold" },
 
-  txRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  txRowHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 6,
+  },
+
+  txContainer: {
     padding: 12,
     borderBottomWidth: 1,
+    borderColor: "#ddd",
   },
+
+  txContentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  txTextContainer: {
+    flex: 1,       
+    marginRight: 10,
+  },
+
+  txSingleLine: {
+    fontSize: 14,
+  },
+
+  txCategory: {
+    fontWeight: "bold",
+  },
+
 });

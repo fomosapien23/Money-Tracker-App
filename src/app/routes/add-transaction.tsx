@@ -1,7 +1,8 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { useTransactionStore } from "../store/transactionStore";
+import { useTransactionStore } from "../../store/transactionStore";
 
 
 export default function AddTransaction() {
@@ -12,7 +13,17 @@ export default function AddTransaction() {
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("");
     const [type, setType] = useState<"income" | "expense">("expense");
+    const [date, setDate] = useState(new Date())
+    const [showDate, setShowDate] = useState(false)
 
+    const resetForm = () => {
+        setTitle("");
+        setAmount("");
+        setCategory("");
+        setType("expense");
+        setDate(new Date())
+    }
+    
     const handleSave = () =>{
         if(!title || !amount || !category) {
             alert("Please fill all fields");
@@ -23,8 +34,10 @@ export default function AddTransaction() {
             title,
             amount: parseFloat(amount),
             category,
-            type
+            type,
+            date: date.toISOString(),
         });
+        resetForm();
         router.back();
     }
 
@@ -68,6 +81,23 @@ export default function AddTransaction() {
             value={category}
             onChangeText={setCategory}
             />
+            <TouchableOpacity
+            style={styles.dateBtn}
+            onPress={()=>setShowDate(true)}
+            >
+                <Text>{date.toDateString()}</Text>
+            </TouchableOpacity>
+            {showDate && (
+                <DateTimePicker
+                value={date}
+                mode='date'
+                display='default'
+                onChange ={(event : any , selectedDate : any)=>{
+                    setShowDate(false)
+                    if(selectedDate) setDate(selectedDate)
+                }}
+                />
+            )}
             <Button title="Save Transaction" onPress={handleSave} />
         </View>
     )
@@ -95,4 +125,10 @@ const styles = StyleSheet.create({
   },
   activeExpense: { backgroundColor: "#ffdddd" },
   activeIncome: { backgroundColor: "#ddffdd" },
+  dateBtn: {
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+   },
 });
