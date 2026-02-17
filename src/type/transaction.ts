@@ -6,3 +6,8 @@ export type Transaction = {
   category: string;
   date: string;
 };
+
+export type TransactionSection = {
+  title: string;
+  data: Transaction[];
+};
