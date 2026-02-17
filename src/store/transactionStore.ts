@@ -13,19 +13,27 @@ type TransactionStore = {
     loadTransactions: () => void;
 }
 
+const sortByDateDesc = (list: Transaction[]) =>
+  list.sort(
+    (a, b) =>
+      new Date(b.date).getTime() -
+      new Date(a.date).getTime()
+  );
+
 export const useTransactionStore = create<TransactionStore>((set)=> ({
     transactions : [],
 
     loadTransactions: () => {
         const data = getLocal();
-        set({transactions : data});
+        set({transactions : sortByDateDesc(data)});
     },
 
     addTransaction: (tx) => {
         const newTx =addLocal(tx)
-        set((state)=>({
-            transactions: [newTx, ...state.transactions]
-        }))
+        set((state) => {
+        const updated = [newTx, ...state.transactions];
+        return { transactions: sortByDateDesc(updated) };
+        });
     },
 
     deleteTransaction: (id) => {
