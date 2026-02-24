@@ -50,7 +50,6 @@ export default function Stats() {
   const typeTransactions = filteredByTime.filter(
     (t) => t.type === chartType
   );
-  console.log("Type Transactions:", typeTransactions);
 
   typeTransactions.forEach((tx) => {
     if (!categoryTotals[tx.category]) {
@@ -58,8 +57,6 @@ export default function Stats() {
     }
     categoryTotals[tx.category] += tx.amount;
   });
-  
-console.log("Category Totals:", categoryTotals);
 
   const categoryKeys = Object.keys(categoryTotals);
 
@@ -154,15 +151,6 @@ console.log("Category Totals:", categoryTotals);
 
     setSelectedDate(newDate);
   };
-
-  
-
-  
-
-  console.log("Pie Data:", pieData);
-console.log("Total Amount:", totalAmount);
-console.log("Chart Type:", chartType);
-console.log("Transaction Types:", filteredByTime.map(t => t.type));
 
 
   return (
