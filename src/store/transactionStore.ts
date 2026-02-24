@@ -3,6 +3,7 @@ import {
     addTransaction as addLocal,
     deleteTransaction as deleteLocal,
     getTransactions as getLocal,
+    updateTransaction,
 } from "../services/localTransactions";
 import { Transaction } from "../type/transaction";
 
@@ -11,6 +12,7 @@ type TransactionStore = {
     addTransaction: (tx: Omit<Transaction, 'id'>) => void;
     deleteTransaction: (id: string) => void;
     loadTransactions: () => void;
+    updateTransaction: (tx: Transaction) => void;
 }
 
 const sortByDateDesc = (list: Transaction[]) =>
@@ -41,5 +43,13 @@ export const useTransactionStore = create<TransactionStore>((set)=> ({
         set((state)=>({
             transactions: state.transactions.filter((t)=> t.id !== id)
         }))
+    },
+
+    updateTransaction: (tx) => {
+        updateTransaction(tx);
+        set((state) => {
+            const updated = state.transactions.map((t) => t.id === tx.id ? tx : t);
+            return { transactions: sortByDateDesc(updated) };
+        })
     },
 }))

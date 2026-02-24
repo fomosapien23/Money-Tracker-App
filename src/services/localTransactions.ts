@@ -37,3 +37,9 @@ export const deleteTransaction = (id: string) => {
     storage.set(KEY, JSON.stringify(list))
 }
 
+export const updateTransaction = (tx: Transaction) => {
+    const list = getTransactions().map((t) => t.id === tx.id ? tx : t);
+    storage.set(KEY, JSON.stringify(list));
+    return tx;
+}
+

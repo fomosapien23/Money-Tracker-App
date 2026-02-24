@@ -2,7 +2,7 @@ import { useTransactionStore } from "@/src/store/transactionStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SectionList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Transaction, TransactionSection } from "../../type/transaction";
 
 const groupTransactions  = (transactions: Transaction[]): TransactionSection[] => {
@@ -60,8 +60,10 @@ export default function Home (){
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (
-    <SafeAreaProvider style={styles.container} >
-        <Text style={styles.heading}>Money Tracker</Text>
+    <SafeAreaView  style={styles.container} edges={['top', 'bottom']} >
+      <View style ={styles.header}>
+        <Text style={styles.heading}>{"Money Tracker" }</Text>
+      </View>
 
         <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Total Balance</Text>
@@ -106,65 +108,76 @@ export default function Home (){
             )}
 
             renderItem={({ item }) => (
-              <View style={{
-                backgroundColor: "#fff",
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 8,
-              }}>
-                 <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 6,
-                      }}
-                    >
-                      <Text style={{ fontWeight: "500", fontSize: 14, color: "#666" }}>
-                        {item.category}
-                      </Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#fff",
+                  padding: 12,
+                  borderRadius: 8,
+                  marginBottom: 8,
+                }}
+                onPress={() =>
+                  router.push({
+                    pathname: "/edit/[id]",
+                    params: { id: item.id },
+                  })
+                }
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}
+                >
+                  <Text style={{ fontWeight: "500", fontSize: 14, color: "#666" }}>
+                    {item.category}
+                  </Text>
+                  <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
+                    <Ionicons name="trash" size={20} color="red" />
+                  </TouchableOpacity>
+                </View>
 
-                      <TouchableOpacity onPress={() => deleteTransaction(item.id)}>
-                        <Ionicons name="trash" size={20} color="red" />
-                      </TouchableOpacity>
-                    </View>
-
-                    {/* 🔹 Second Row → Title + Amount */}
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                        {item.title}
-                      </Text>
-
-                      <Text
-                        style={{
-                          fontWeight: "600",
-                          fontSize: 16,
-                          color: item.type === "income" ? "green" : "red",
-                        }}
-                      >
-                        {item.type === "income" ? "+" : "-"} ₹{item.amount}
-                      </Text>
-                    </View>
-
-                  </View>
+                {/* 🔹 Second Row → Title + Amount */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ fontWeight: "600", fontSize: 16 }}>
+                    {item.title}
+                  </Text>
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      fontSize: 16,
+                      color: item.type === "income" ? "green" : "red",
+                    }}
+                  >
+                    {item.type === "income" ? "+" : "-"} ₹{item.amount}
+                  </Text>
+                </View>
+              </TouchableOpacity>
             )}
 
           />
         </View>
-      </SafeAreaProvider>
+      </SafeAreaView >
   )
 
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
-  heading: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
+  header: { 
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    justifyContent: "center",
+    },
+  heading: { fontSize: 22, fontWeight: "bold", justifyContent: "center", alignItems: "center" },
 
   balanceCard: {
     backgroundColor: "#222",

@@ -1,16 +1,29 @@
 import { useCategoryStore } from "@/src/store/categoryStore";
+import { useTransactionStore } from "@/src/store/transactionStore";
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Button, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { Alert, Button, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTransactionStore } from "../../store/transactionStore";
 
+interface FormErrors {
+  title?: string;
+  amount?: string;
+  date?: string;
+  category?: string;
+}
 
-export default function AddTransaction() {
+export default function EditTransaction() {
     const router = useRouter();
-    const addTransaction = useTransactionStore((s)=>s.addTransaction);
+    const { transactions, addTransaction, updateTransaction } = useTransactionStore();
+    const idtx = useLocalSearchParams();
+    const transactionId = Array.isArray(idtx.id) ? idtx.id[0] : idtx.id;
+    const [errors, setErrors] = useState<FormErrors>({});
 
+    const editingTransaction = transactionId
+    ? transactions.find((t:any) => t.id.toString() === transactionId)
+    : null;
     const [title, setTitle] = useState("");
     const [amount, setAmount] = useState("");
     const [category, setCategory] = useState("");
@@ -41,13 +54,17 @@ export default function AddTransaction() {
             return;
         }
 
-        addTransaction({
+        const transactionData = {
+            id: editingTransaction ? editingTransaction.id : Date.now().toString(),
             title,
             amount: parseFloat(amount),
             category,
             type,
             date: date.toISOString(),
-        });
+        };
+
+        updateTransaction(transactionData);
+
         resetForm();
         router.back();
     };
@@ -72,13 +89,25 @@ export default function AddTransaction() {
         );
     };
 
+    React.useEffect(() => {
+        if (editingTransaction) {
+            setTitle(editingTransaction.title);
+            setAmount(editingTransaction.amount.toString());
+            setCategory(editingTransaction.category);
+            setType(editingTransaction.type);
+            setDate(new Date(editingTransaction.date));
+            setEditText(editingTransaction.category);
+        }
+    }, [editingTransaction]);
 
     React.useEffect(() => {
         loadCategories();
     }, []);
 
     React.useEffect(() => {
-        setCategory("");
+        if (!editingTransaction) {
+            setCategory("");
+        }
     }, [type]);
 
     React.useEffect(() => {
@@ -95,13 +124,19 @@ export default function AddTransaction() {
     }, [categories, pendingCategory]);
 
     return (
+        
         <SafeAreaView style={styles.container}>
             <View style ={styles.header}>
-                <Text style={styles.heading}>{"Add Transaction" }</Text>
+                 <TouchableOpacity onPress={() => router.back()}>
+                    <Ionicons name="chevron-back-outline" size={24} />
+                </TouchableOpacity>
+                <Text style={styles.heading}>{"Update Transaction" }</Text>
+                 <View style={{ width: 24 }} />
             </View>
+           
 
             <TextInput
-            style={styles.input}
+            style={[styles.input, errors.title && styles.inputError]}
             placeholder="Title (e.g., Salary, Groceries)"
             value={title}
             onChangeText={setTitle}
@@ -110,7 +145,7 @@ export default function AddTransaction() {
             />
 
             <TextInput
-            style={styles.input}
+            style={[styles.input, errors.amount && styles.inputError]}
             placeholder="Amount (e.g., 500, 20.75)"
             value={amount}
             onChangeText={setAmount}
@@ -155,60 +190,44 @@ export default function AddTransaction() {
 
             {editingCategory && (
             <Modal
-                visible={showAddCategory}
                 transparent
-                animationType="fade"
-                >
+                animationType="slide"
+                visible={!!editingCategory}
+            >
                 <TouchableWithoutFeedback
-                    onPress={() => {
-                    Keyboard.dismiss();
-                    setShowAddCategory(false);
-                    }}
+                onPress={() => setEditingCategory(null)}
                 >
-                    <View style={styles.modalOverlay}>
+                <View style={styles.modalOverlay}>
                     <TouchableWithoutFeedback>
-                        <KeyboardAvoidingView
-                        behavior={Platform.OS === "ios" ? "padding" : "height"}
-                        style={{ width: "100%" }}
+                    <View style={styles.modalBox}>
+                        
+                        <Text style={styles.modalTitle}>
+                        Edit Category
+                        </Text>
+
+                        <TextInput
+                        value={editText}
+                        onChangeText={setEditText}
+                        style={styles.input}
+                        placeholder="Category name"
+                        />
+
+                        <TouchableOpacity
+                        style={styles.saveButton}
+                        onPress={() => {
+                            updateCategory(editingCategory.id, editText);
+                            setCategory(editText);
+                            setEditingCategory(null);
+                        }}
                         >
-                        <View style={styles.modalBox}>
-                            <Text style={styles.modalTitle}>Add Category</Text>
+                        <Text style={styles.saveButtonText}>
+                            Save Changes
+                        </Text>
+                        </TouchableOpacity>
 
-                            <TextInput
-                            value={newCategoryName}
-                            onChangeText={setNewCategoryName}
-                            placeholder="Category name"
-                            style={styles.input}
-                            />
-
-                            <Button
-                            title="Add"
-                            onPress={() => {
-                                const name = newCategoryName.trim();
-                                if (!name) return;
-
-                                const exists = categories.some(
-                                (c) => c.name.toLowerCase() === name.toLowerCase()
-                                );
-
-                                if (exists) {
-                                alert("Category already exists");
-                                return;
-                                }
-
-                                useCategoryStore
-                                .getState()
-                                .addCategory(name, type);
-
-                                setPendingCategory(name);
-                                setNewCategoryName("");
-                                setShowAddCategory(false);
-                            }}
-                            />
-                        </View>
-                        </KeyboardAvoidingView>
-                    </TouchableWithoutFeedback>
                     </View>
+                    </TouchableWithoutFeedback>
+                </View>
                 </TouchableWithoutFeedback>
             </Modal>
             )}
@@ -328,7 +347,7 @@ export default function AddTransaction() {
             </Modal>
 
             <TouchableOpacity
-            style={styles.dateBtn}
+            style={[styles.dateBtn, errors.date && styles.inputError]}
             onPress={()=>setShowDate(true)}
             >
                 <Text>{date.toDateString()}</Text>
@@ -344,8 +363,11 @@ export default function AddTransaction() {
                 }}
                 />
             )}
-            <Button title="Save Transaction" onPress={handleSave} />
-        </SafeAreaView>
+            <Button
+            title={"Update Transaction"}
+            onPress={handleSave}
+            />
+        </SafeAreaView >
     )
 
 }
@@ -357,7 +379,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    justifyContent: "center",
+    justifyContent: "space-between",
     },
   heading: { fontSize: 22, fontWeight: "bold", justifyContent: "center", alignItems: "center" },
   input: {

@@ -8,7 +8,7 @@ export default function TabLayout() {
         <Tabs 
         screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: "#000",
+            tabBarActiveTintColor: "#1971C2",
             tabBarStyle: { paddingBottom: 6, height: 60 },
         }}>
             <Tabs.Screen name="index" options={{title:"Home", tabBarIcon:({color, size})=>{
