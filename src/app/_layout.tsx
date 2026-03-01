@@ -1,17 +1,33 @@
-import { useTransactionStore } from "@/src/store/transactionStore";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import "react-native-get-random-values";
+import { AuthProvider, useAuth } from "../context/AuthProvider";
 
+function RootNavigation() {
+  const { session, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const inAuthGroup = segments[0] === "auth";
+
+    if (!session && !inAuthGroup) {
+      router.replace("../auth/login");
+    }
+
+    if (session && inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [session, segments, loading]);
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
 
 export default function RootLayout() {
-  const loadTransactions = useTransactionStore((s)=>s.loadTransactions)
-  useEffect(()=>{
-    loadTransactions()
-  },[])
   return (
-    <Stack screenOptions={{headerShown: false}}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
-    </Stack>
-  )
+    <AuthProvider>
+      <RootNavigation />
+    </AuthProvider>
+  );
 }

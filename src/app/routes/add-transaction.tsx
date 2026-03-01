@@ -2,364 +2,355 @@ import { useCategoryStore } from "@/src/store/categoryStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Button, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import {
+    Alert,
+    Button,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTransactionStore } from "../../store/transactionStore";
 
-
 export default function AddTransaction() {
-    const router = useRouter();
-    const addTransaction = useTransactionStore((s)=>s.addTransaction);
+  const router = useRouter();
+  const addTransaction = useTransactionStore((s) => s.addTransaction);
 
-    const [title, setTitle] = useState("");
-    const [amount, setAmount] = useState("");
-    const [category, setCategory] = useState("");
-    const [type, setType] = useState<"income" | "expense">("expense");
-    const [date, setDate] = useState(new Date())
-    const [showDate, setShowDate] = useState(false)
-    const [showAddCategory, setShowAddCategory] = useState(false);
-    const { expenseCategories, incomeCategories, loadCategories, updateCategory, deleteCategory } = useCategoryStore();
-    const categories = type === "income" ? incomeCategories : expenseCategories;
-    const [newCategoryName, setNewCategoryName] = useState("");
-    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-    const [pendingCategory, setPendingCategory] = useState<string | null>(null);
-    const [editingCategory, setEditingCategory] = useState<any>(null);
-    const [editText, setEditText] = useState("");
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [type, setType] = useState<"income" | "expense">("expense");
+  const [date, setDate] = useState(new Date());
+  const [showDate, setShowDate] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const {
+    expenseCategories,
+    incomeCategories,
+    loadCategories,
+    updateCategory,
+    deleteCategory,
+  } = useCategoryStore();
+  const categories = type === "income" ? incomeCategories : expenseCategories;
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editText, setEditText] = useState("");
 
+  const resetForm = () => {
+    setTitle("");
+    setAmount("");
+    setCategory("");
+    setType("expense");
+    setDate(new Date());
+  };
 
-    const resetForm = () => {
-        setTitle("");
-        setAmount("");
-        setCategory("");
-        setType("expense");
-        setDate(new Date())
+  const handleSave = () => {
+    if (!title || !amount || !category) {
+      alert("Please fill all fields");
+      return;
     }
-    
-    const handleSave = () =>{
-        if(!title || !amount || !category) {
-            alert("Please fill all fields");
-            return;
-        }
 
-        addTransaction({
-            title,
-            amount: parseFloat(amount),
-            category,
-            type,
-            date: date.toISOString(),
-        });
-        resetForm();
-        router.back();
-    };
+    addTransaction({
+      title,
+      amount: parseFloat(amount),
+      category,
+      type,
+      date: date.toISOString(),
+    });
+    resetForm();
+    router.back();
+  };
 
-    const handleEdit = (cat: any) => {
-        setEditingCategory(cat);
-        setEditText(cat.name);
-    };
+  const handleEdit = (cat: any) => {
+    setEditingCategory(cat);
+    setEditText(cat.name);
+  };
 
-    const handleDelete = (cat: any) => {
-        Alert.alert(
-            "Delete Category",
-            `Delete "${cat.name}"?`,
-            [
-            { text: "Cancel", style: "cancel" },
-            {
-                text: "Delete",
-                style: "destructive",
-                onPress: () => deleteCategory(cat.id),
-            },
-            ]
-        );
-    };
+  const handleDelete = (cat: any) => {
+    Alert.alert("Delete Category", `Delete "${cat.name}"?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => deleteCategory(cat.id),
+      },
+    ]);
+  };
 
+  React.useEffect(() => {
+    loadCategories();
+  }, []);
 
-    React.useEffect(() => {
-        loadCategories();
-    }, []);
+  React.useEffect(() => {
+    setCategory("");
+  }, [type]);
 
-    React.useEffect(() => {
-        setCategory("");
-    }, [type]);
+  React.useEffect(() => {
+    if (!pendingCategory) return;
 
-    React.useEffect(() => {
-        if (!pendingCategory) return;
+    const found = categories.find(
+      (c) => c.name.toLowerCase() === pendingCategory.toLowerCase(),
+    );
 
-        const found = categories.find(
-            (c) => c.name.toLowerCase() === pendingCategory.toLowerCase()
-        );
+    if (found) {
+      setCategory(found.name);
+      setPendingCategory(null);
+    }
+  }, [categories, pendingCategory]);
 
-        if (found) {
-            setCategory(found.name);
-            setPendingCategory(null);
-        }
-    }, [categories, pendingCategory]);
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.heading}>{"Add Transaction"}</Text>
+      </View>
 
-    return (
-        <SafeAreaView style={styles.container}>
-            <View style ={styles.header}>
-                <Text style={styles.heading}>{"Add Transaction" }</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Title (e.g., Salary, Groceries)"
+        value={title}
+        onChangeText={setTitle}
+        placeholderTextColor="#888"
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Amount (e.g., 500, 20.75)"
+        value={amount}
+        onChangeText={setAmount}
+        keyboardType="numeric"
+        placeholderTextColor="#888"
+      />
+
+      <View style={styles.row}>
+        <TouchableOpacity
+          style={[styles.typeBtn, type === "expense" && styles.activeExpense]}
+          onPress={() => setType("expense")}
+        >
+          <Text>Expense</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.typeBtn, type === "income" && styles.activeIncome]}
+          onPress={() => setType("income")}
+        >
+          <Text>Income</Text>
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity
+        style={styles.inlineInput}
+        onPress={() => setShowCategoryDropdown((v) => !v)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.inlineLabel}>Category</Text>
+
+        <View style={styles.inlineValueContainer}>
+          <Text style={[styles.inlineValue, !category && { color: "#999" }]}>
+            {category || "Select"}
+          </Text>
+          <Text style={styles.arrow}>▼</Text>
+        </View>
+      </TouchableOpacity>
+
+      {editingCategory && (
+        <Modal visible={showAddCategory} transparent animationType="fade">
+          <TouchableWithoutFeedback
+            onPress={() => {
+              Keyboard.dismiss();
+              setShowAddCategory(false);
+            }}
+          >
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === "ios" ? "padding" : "height"}
+                  style={{ width: "100%" }}
+                >
+                  <View style={styles.modalBox}>
+                    <Text style={styles.modalTitle}>Add Category</Text>
+
+                    <TextInput
+                      value={newCategoryName}
+                      onChangeText={setNewCategoryName}
+                      placeholder="Category name"
+                      style={styles.input}
+                    />
+
+                    <Button
+                      title="Add"
+                      onPress={() => {
+                        const name = newCategoryName.trim();
+                        if (!name) return;
+
+                        const exists = categories.some(
+                          (c) => c.name.toLowerCase() === name.toLowerCase(),
+                        );
+
+                        if (exists) {
+                          alert("Category already exists");
+                          return;
+                        }
+
+                        useCategoryStore.getState().addCategory(name, type);
+
+                        setPendingCategory(name);
+                        setNewCategoryName("");
+                        setShowAddCategory(false);
+                      }}
+                    />
+                  </View>
+                </KeyboardAvoidingView>
+              </TouchableWithoutFeedback>
             </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      )}
 
-            <TextInput
-            style={styles.input}
-            placeholder="Title (e.g., Salary, Groceries)"
-            value={title}
-            onChangeText={setTitle}
-            placeholderTextColor="#888"
-            
-            />
+      {showCategoryDropdown && (
+        <View style={styles.dropdownRoot}>
+          {/* Backdrop */}
+          <TouchableWithoutFeedback
+            onPress={() => setShowCategoryDropdown(false)}
+          >
+            <View style={styles.backdrop} />
+          </TouchableWithoutFeedback>
 
-            <TextInput
-            style={styles.input}
-            placeholder="Amount (e.g., 500, 20.75)"
-            value={amount}
-            onChangeText={setAmount}
-            keyboardType="numeric"
-            placeholderTextColor="#888"
-            />
-
-            <View style={styles.row}>
-                <TouchableOpacity
-                style={[styles.typeBtn, type === "expense" && styles.activeExpense]}
-                onPress={() => setType("expense")}
-                >
-                    <Text>Expense</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                style={[styles.typeBtn, type === "income" && styles.activeIncome]}
-                onPress={() => setType("income")}
-                >
-                    <Text>Income</Text>
-                </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-                style={styles.inlineInput}
-                onPress={() => setShowCategoryDropdown((v) => !v)}
-                activeOpacity={0.8}
-                >
-                <Text style={styles.inlineLabel}>Category</Text>
-
-                <View style={styles.inlineValueContainer}>
-                    <Text
-                    style={[
-                        styles.inlineValue,
-                        !category && { color: "#999" },
-                    ]}
-                    >
-                    {category || "Select"}
-                    </Text>
-                    <Text style={styles.arrow}>▼</Text>
-                </View>
-            </TouchableOpacity>
-
-            {editingCategory && (
-            <Modal
-                visible={showAddCategory}
-                transparent
-                animationType="fade"
-                >
-                <TouchableWithoutFeedback
+          {/* Dropdown */}
+          <View style={styles.popup}>
+            <ScrollView
+              style={{ maxHeight: 250 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {categories.map((c) => (
+                <View key={c.id} style={styles.categoryRow}>
+                  {/* Select Category */}
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
                     onPress={() => {
-                    Keyboard.dismiss();
-                    setShowAddCategory(false);
+                      setCategory(c.name);
+                      setShowCategoryDropdown(false);
                     }}
-                >
-                    <View style={styles.modalOverlay}>
-                    <TouchableWithoutFeedback>
-                        <KeyboardAvoidingView
-                        behavior={Platform.OS === "ios" ? "padding" : "height"}
-                        style={{ width: "100%" }}
-                        >
-                        <View style={styles.modalBox}>
-                            <Text style={styles.modalTitle}>Add Category</Text>
+                  >
+                    <Text style={styles.popupText}>{c.name}</Text>
+                  </TouchableOpacity>
 
-                            <TextInput
-                            value={newCategoryName}
-                            onChangeText={setNewCategoryName}
-                            placeholder="Category name"
-                            style={styles.input}
-                            />
+                  {/* Icons */}
+                  {c.isCustom && (
+                    <View style={styles.iconContainer}>
+                      {/* Edit */}
+                      <TouchableOpacity onPress={() => handleEdit(c)}>
+                        <Text style={styles.editIcon}>✏️</Text>
+                      </TouchableOpacity>
 
-                            <Button
-                            title="Add"
-                            onPress={() => {
-                                const name = newCategoryName.trim();
-                                if (!name) return;
-
-                                const exists = categories.some(
-                                (c) => c.name.toLowerCase() === name.toLowerCase()
-                                );
-
-                                if (exists) {
-                                alert("Category already exists");
-                                return;
-                                }
-
-                                useCategoryStore
-                                .getState()
-                                .addCategory(name, type);
-
-                                setPendingCategory(name);
-                                setNewCategoryName("");
-                                setShowAddCategory(false);
-                            }}
-                            />
-                        </View>
-                        </KeyboardAvoidingView>
-                    </TouchableWithoutFeedback>
+                      {/* Delete */}
+                      <TouchableOpacity onPress={() => handleDelete(c)}>
+                        <Text style={styles.deleteIcon}>🗑️</Text>
+                      </TouchableOpacity>
                     </View>
-                </TouchableWithoutFeedback>
-            </Modal>
-            )}
-
-
-
-            {showCategoryDropdown && (
-                <View style={styles.dropdownRoot}>
-                    {/* Backdrop */}
-                    <TouchableWithoutFeedback
-                    onPress={() => setShowCategoryDropdown(false)}
-                    >
-                    <View style={styles.backdrop} />
-                    </TouchableWithoutFeedback>
-
-                    {/* Dropdown */}
-                    <View style={styles.popup}>
-                    <ScrollView
-                        style={{ maxHeight: 250 }}
-                        keyboardShouldPersistTaps="handled"
-                    >
-                        {categories.map((c) => (
-                        <View key={c.id} style={styles.categoryRow}>
-                            
-                            {/* Select Category */}
-                            <TouchableOpacity
-                            style={{ flex: 1 }}
-                            onPress={() => {
-                                setCategory(c.name);
-                                setShowCategoryDropdown(false);
-                            }}
-                            >
-                            <Text style={styles.popupText}>{c.name}</Text>
-                            </TouchableOpacity>
-
-                            {/* Icons */}
-                            {c.isCustom && (
-                            <View style={styles.iconContainer}>
-                                {/* Edit */}
-                                <TouchableOpacity onPress={() => handleEdit(c)}>
-                                <Text style={styles.editIcon}>✏️</Text>
-                                </TouchableOpacity>
-
-                                {/* Delete */}
-                                <TouchableOpacity onPress={() => handleDelete(c)}>
-                                <Text style={styles.deleteIcon}>🗑️</Text>
-                                </TouchableOpacity>
-                            </View>
-                            )}
-                            
-                        </View>
-                        ))}
-
-
-                        <TouchableOpacity
-                        style={[styles.popupItem, styles.addNewItem]}
-                        onPress={() => {
-                            setShowCategoryDropdown(false);
-                            setShowAddCategory(true);
-                        }}
-                        >
-                        <Text style={styles.addNewText}>➕ Add new category</Text>
-                        </TouchableOpacity>
-                    </ScrollView>
-                    </View>
+                  )}
                 </View>
-            )}
+              ))}
 
-           <Modal
-            visible={showAddCategory}
-            transparent
-            animationType="fade"
-            >
-                <TouchableWithoutFeedback
-                    onPress={() => setShowAddCategory(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                    <TouchableWithoutFeedback>
-                        <View style={styles.modalBox}>
-                        <Text style={styles.modalTitle}>Add Category</Text>
-
-                        <TextInput
-                            value={newCategoryName}
-                            onChangeText={setNewCategoryName}
-                            placeholder="Category name"
-                            style={styles.input}
-                        />
-
-                        <Button
-                            title="Add"
-                            onPress={() => {
-                            const name = newCategoryName.trim();
-                            if (!name) return;
-
-                            const exists = categories.some(
-                                (c) => c.name.toLowerCase() === name.toLowerCase()
-                            );
-
-                            if (exists) {
-                                alert("Category already exists");
-                                return;
-                            }
-
-                            useCategoryStore
-                                .getState()
-                                .addCategory(name, type);
-
-                            setPendingCategory(name);
-                            setNewCategoryName("");
-                            setShowAddCategory(false);
-                            }}
-                        />
-                        </View>
-                    </TouchableWithoutFeedback>
-                    </View>
-                </TouchableWithoutFeedback>
-            </Modal>
-
-            <TouchableOpacity
-            style={styles.dateBtn}
-            onPress={()=>setShowDate(true)}
-            >
-                <Text>{date.toDateString()}</Text>
-            </TouchableOpacity>
-            {showDate && (
-                <DateTimePicker
-                value={date}
-                mode='date'
-                display='default'
-                onChange ={(event : any , selectedDate : any)=>{
-                    setShowDate(false)
-                    if(selectedDate) setDate(selectedDate)
+              <TouchableOpacity
+                style={[styles.popupItem, styles.addNewItem]}
+                onPress={() => {
+                  setShowCategoryDropdown(false);
+                  setShowAddCategory(true);
                 }}
+              >
+                <Text style={styles.addNewText}>➕ Add new category</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      )}
+
+      <Modal visible={showAddCategory} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={() => setShowAddCategory(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalBox}>
+                <Text style={styles.modalTitle}>Add Category</Text>
+
+                <TextInput
+                  value={newCategoryName}
+                  onChangeText={setNewCategoryName}
+                  placeholder="Category name"
+                  style={styles.input}
                 />
-            )}
-            <Button title="Save Transaction" onPress={handleSave} />
-        </SafeAreaView>
-    )
 
+                <Button
+                  title="Add"
+                  onPress={() => {
+                    const name = newCategoryName.trim();
+                    if (!name) return;
+
+                    const exists = categories.some(
+                      (c) => c.name.toLowerCase() === name.toLowerCase(),
+                    );
+
+                    if (exists) {
+                      alert("Category already exists");
+                      return;
+                    }
+
+                    useCategoryStore.getState().addCategory(name, type);
+
+                    setPendingCategory(name);
+                    setNewCategoryName("");
+                    setShowAddCategory(false);
+                  }}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      <TouchableOpacity
+        style={styles.dateBtn}
+        onPress={() => setShowDate(true)}
+      >
+        <Text>{date.toDateString()}</Text>
+      </TouchableOpacity>
+      {showDate && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          onChange={(event: any, selectedDate: any) => {
+            setShowDate(false);
+            if (selectedDate) setDate(selectedDate);
+          }}
+        />
+      )}
+      <Button title="Save Transaction" onPress={handleSave} />
+    </SafeAreaView>
+  );
 }
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
-  header: { 
+  header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
     justifyContent: "center",
-    },
-  heading: { fontSize: 22, fontWeight: "bold", justifyContent: "center", alignItems: "center" },
+  },
+  heading: {
+    fontSize: 22,
+    fontWeight: "bold",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   input: {
     borderWidth: 1,
     padding: 12,
@@ -390,28 +381,28 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
-   },
+  },
 
-    modalOverlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
-    },
+  },
 
-    modalBox: {
+  modalBox: {
     backgroundColor: "white",
     padding: 20,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    },
+  },
 
-    modalTitle: {
+  modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
-    },
+  },
 
-    inlineInput: {
+  inlineInput: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
@@ -420,33 +411,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 16,
     marginBottom: 12,
-    },
+  },
 
-    inlineLabel: {
+  inlineLabel: {
     fontSize: 14,
     color: "#555",
     width: 90, // 👈 keeps alignment clean
-    },
+  },
 
-    inlineValueContainer: {
+  inlineValueContainer: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    },
+  },
 
-    inlineValue: {
+  inlineValue: {
     fontSize: 16,
     color: "#000",
-    },
+  },
 
-    arrow: {
+  arrow: {
     fontSize: 12,
     color: "#555",
-    },
+  },
 
-
-    popup: {
+  popup: {
     position: "absolute",
     top: 250, // 👈 adjust if needed
     left: 20,
@@ -457,56 +447,56 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     zIndex: 1000,
     elevation: 5,
-    },
+  },
 
-    popupItem: {
+  popupItem: {
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    },
+  },
 
-    popupText: {
+  popupText: {
     fontSize: 16,
-    },
+  },
 
-    addNewItem: {
+  addNewItem: {
     backgroundColor: "#f7f7f7",
-    },
+  },
 
-    addNewText: {
+  addNewText: {
     fontSize: 16,
     fontWeight: "600",
     color: "#007AFF",
-    },
+  },
 
-    popupOverlay: {
+  popupOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     zIndex: 999,
-    },
+  },
 
-    dropdownRoot: {
+  dropdownRoot: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
     zIndex: 999,
-    },
+  },
 
-    backdrop: {
+  backdrop: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    },
+  },
 
-      /* =========================
+  /* =========================
      Category Row (Edit/Delete)
   ========================== */
 
