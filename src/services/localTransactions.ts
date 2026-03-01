@@ -1,45 +1,43 @@
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
 import { storage } from "../storage/mmkv";
 
-export type Transaction ={
-    id: string,
-    title: string,
-    amount: number,
-    type: 'income' | 'expense',
-    category: string,
-    date: string
-}
+export type Transaction = {
+  id: string;
+  title: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string;
+  date: string;
+};
 
-const KEY = "transactions"
+const KEY = "transactions";
 
 export const getTransactions = (): Transaction[] => {
-    const data =storage.getString(KEY)
-    return data ? JSON.parse(data) : []
-}
+  const data = storage.getString(KEY);
+  return data ? JSON.parse(data) : [];
+};
 
+export const addTransaction = (tx: Omit<Transaction, "id">) => {
+  const list = getTransactions();
 
-export const addTransaction = (tx : Omit<Transaction, 'id'>) => {
-    const list = getTransactions();
+  const newTx: Transaction = {
+    id: uuidv4(),
+    ...tx,
+  };
 
-    const newTx: Transaction ={
-        id: uuidv4(),
-        ...tx
-    }
-
-    list.unshift(newTx)
-    storage.set(KEY, JSON.stringify(list))
-    return newTx;
-}
+  list.unshift(newTx);
+  storage.set(KEY, JSON.stringify(list));
+  return newTx;
+};
 
 export const deleteTransaction = (id: string) => {
-    const list = getTransactions().filter((t)=> t.id !=id)
-    storage.set(KEY, JSON.stringify(list))
-}
+  const list = getTransactions().filter((t) => t.id != id);
+  storage.set(KEY, JSON.stringify(list));
+};
 
 export const updateTransaction = (tx: Transaction) => {
-    const list = getTransactions().map((t) => t.id === tx.id ? tx : t);
-    storage.set(KEY, JSON.stringify(list));
-    return tx;
-}
-
+  const list = getTransactions().map((t) => (t.id === tx.id ? tx : t));
+  storage.set(KEY, JSON.stringify(list));
+  return tx;
+};
