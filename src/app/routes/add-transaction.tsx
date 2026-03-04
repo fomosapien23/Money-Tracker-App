@@ -1,28 +1,26 @@
-import { useCategoryStore } from "@/src/store/categoryStore";
+import { supabase } from "@/src/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    Button,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Alert,
+  Button,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTransactionStore } from "../../store/transactionStore";
 
 export default function AddTransaction() {
   const router = useRouter();
-  const addTransaction = useTransactionStore((s) => s.addTransaction);
 
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -31,19 +29,13 @@ export default function AddTransaction() {
   const [date, setDate] = useState(new Date());
   const [showDate, setShowDate] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const {
-    expenseCategories,
-    incomeCategories,
-    loadCategories,
-    updateCategory,
-    deleteCategory,
-  } = useCategoryStore();
-  const categories = type === "income" ? incomeCategories : expenseCategories;
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [pendingCategory, setPendingCategory] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [editText, setEditText] = useState("");
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
   const resetForm = () => {
     setTitle("");
@@ -53,42 +45,154 @@ export default function AddTransaction() {
     setDate(new Date());
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title || !amount || !category) {
-      alert("Please fill all fields");
+      Alert.alert("Error", "Please fill all fields");
       return;
     }
 
-    addTransaction({
-      title,
-      amount: parseFloat(amount),
-      category,
-      type,
-      date: date.toISOString(),
-    });
-    resetForm();
-    router.back();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        Alert.alert("Error", "User not authenticated");
+        return;
+      }
+
+      const { error } = await supabase.from("transactions").insert([
+        {
+          user_id: user.id,
+          title,
+          amount: parseFloat(amount),
+          category,
+          type,
+          date: date.toISOString(),
+        },
+      ]);
+
+      if (error) throw error;
+
+      resetForm();
+      router.back();
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    }
   };
 
-  const handleEdit = (cat: any) => {
-    setEditingCategory(cat);
-    setEditText(cat.name);
+  const handleUpdateCategory = async () => {
+    if (!editingCategory) return;
+
+    try {
+      const { error } = await supabase
+        .from("categories")
+        .update({ name: editText })
+        .eq("id", editingCategory.id);
+
+      if (error) throw error;
+      setEditingCategory(null);
+      setEditText("");
+      setShowAddCategory(false);
+      fetchCategories();
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    }
   };
 
-  const handleDelete = (cat: any) => {
+  const handleDelete = async (cat: any) => {
     Alert.alert("Delete Category", `Delete "${cat.name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => deleteCategory(cat.id),
+        onPress: async () => {
+          try {
+            const { error } = await supabase
+              .from("categories")
+              .delete()
+              .eq("id", cat.id);
+
+            if (error) throw error;
+
+            fetchCategories();
+          } catch (err: any) {
+            Alert.alert("Error", err.message);
+          }
+        },
       },
     ]);
   };
 
   React.useEffect(() => {
-    loadCategories();
-  }, []);
+    fetchCategories();
+  }, [type]);
+
+  const fetchCategories = async () => {
+    try {
+      setLoadingCategories(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("type", type)
+        .or(`user_id.eq.${user.id},is_default.eq.true`)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+
+      setCategories(data || []);
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  const handleAddCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      Alert.alert("User not authenticated");
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from("categories")
+        .insert([
+          {
+            name,
+            type,
+            user_id: user.id,
+            is_default: false,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setCategory(data[0].name);
+      }
+
+      fetchCategories();
+      setNewCategoryName("");
+      setShowAddCategory(false);
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    }
+  };
 
   React.useEffect(() => {
     setCategory("");
@@ -160,60 +264,6 @@ export default function AddTransaction() {
         </View>
       </TouchableOpacity>
 
-      {editingCategory && (
-        <Modal visible={showAddCategory} transparent animationType="fade">
-          <TouchableWithoutFeedback
-            onPress={() => {
-              Keyboard.dismiss();
-              setShowAddCategory(false);
-            }}
-          >
-            <View style={styles.modalOverlay}>
-              <TouchableWithoutFeedback>
-                <KeyboardAvoidingView
-                  behavior={Platform.OS === "ios" ? "padding" : "height"}
-                  style={{ width: "100%" }}
-                >
-                  <View style={styles.modalBox}>
-                    <Text style={styles.modalTitle}>Add Category</Text>
-
-                    <TextInput
-                      value={newCategoryName}
-                      onChangeText={setNewCategoryName}
-                      placeholder="Category name"
-                      style={styles.input}
-                    />
-
-                    <Button
-                      title="Add"
-                      onPress={() => {
-                        const name = newCategoryName.trim();
-                        if (!name) return;
-
-                        const exists = categories.some(
-                          (c) => c.name.toLowerCase() === name.toLowerCase(),
-                        );
-
-                        if (exists) {
-                          alert("Category already exists");
-                          return;
-                        }
-
-                        useCategoryStore.getState().addCategory(name, type);
-
-                        setPendingCategory(name);
-                        setNewCategoryName("");
-                        setShowAddCategory(false);
-                      }}
-                    />
-                  </View>
-                </KeyboardAvoidingView>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-      )}
-
       {showCategoryDropdown && (
         <View style={styles.dropdownRoot}>
           {/* Backdrop */}
@@ -243,16 +293,31 @@ export default function AddTransaction() {
                   </TouchableOpacity>
 
                   {/* Icons */}
-                  {c.isCustom && (
+                  {!c.is_default && (
                     <View style={styles.iconContainer}>
                       {/* Edit */}
-                      <TouchableOpacity onPress={() => handleEdit(c)}>
-                        <Text style={styles.editIcon}>✏️</Text>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setEditingCategory(c);
+                          setEditText(c.name);
+                          setShowAddCategory(true);
+                        }}
+                      >
+                        <Ionicons
+                          name="pencil-outline"
+                          size={20}
+                          color="#ff8800"
+                          style={styles.editIcon}
+                        />
                       </TouchableOpacity>
 
                       {/* Delete */}
                       <TouchableOpacity onPress={() => handleDelete(c)}>
-                        <Text style={styles.deleteIcon}>🗑️</Text>
+                        <Ionicons
+                          name="trash-outline"
+                          size={20}
+                          color="#044896"
+                        />
                       </TouchableOpacity>
                     </View>
                   )}
@@ -274,45 +339,56 @@ export default function AddTransaction() {
       )}
 
       <Modal visible={showAddCategory} transparent animationType="fade">
-        <TouchableWithoutFeedback onPress={() => setShowAddCategory(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.modalBox}>
-                <Text style={styles.modalTitle}>Add Category</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback
+            onPress={() => {
+              setShowAddCategory(false);
+              setEditingCategory(null);
+            }}
+          >
+            <View style={styles.backdrop} />
+          </TouchableWithoutFeedback>
 
-                <TextInput
-                  value={newCategoryName}
-                  onChangeText={setNewCategoryName}
-                  placeholder="Category name"
-                  style={styles.input}
-                />
+          <View style={styles.centeredModal}>
+            <Text style={styles.modalTitle}>
+              {editingCategory ? "Edit Category" : "Add Category"}
+            </Text>
 
-                <Button
-                  title="Add"
-                  onPress={() => {
-                    const name = newCategoryName.trim();
-                    if (!name) return;
+            <TextInput
+              value={editingCategory ? editText : newCategoryName}
+              onChangeText={(text) =>
+                editingCategory ? setEditText(text) : setNewCategoryName(text)
+              }
+              placeholder="Category name"
+              style={styles.input}
+              autoFocus
+            />
 
-                    const exists = categories.some(
-                      (c) => c.name.toLowerCase() === name.toLowerCase(),
-                    );
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowAddCategory(false);
+                  setEditingCategory(null);
+                }}
+              >
+                <Text style={styles.cancelBtn}>Cancel</Text>
+              </TouchableOpacity>
 
-                    if (exists) {
-                      alert("Category already exists");
-                      return;
-                    }
-
-                    useCategoryStore.getState().addCategory(name, type);
-
-                    setPendingCategory(name);
-                    setNewCategoryName("");
-                    setShowAddCategory(false);
-                  }}
-                />
-              </View>
-            </TouchableWithoutFeedback>
+              <TouchableOpacity
+                onPress={
+                  editingCategory ? handleUpdateCategory : handleAddCategory
+                }
+              >
+                <Text style={styles.saveBtn}>
+                  {editingCategory ? "Update" : "Add"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
       <TouchableOpacity
@@ -383,23 +459,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-
   modalBox: {
     backgroundColor: "white",
     padding: 20,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-  },
-
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
   },
 
   inlineInput: {
@@ -575,5 +639,44 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+
+  centeredModal: {
+    width: "85%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 16,
+    elevation: 10,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+
+  cancelBtn: {
+    fontSize: 16,
+    color: "#888",
+  },
+
+  saveBtn: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007AFF",
   },
 });

@@ -1,6 +1,7 @@
-import { useTransactionStore } from "@/src/store/transactionStore";
+import { fetchTransactions } from "@/src/services/transactionService";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useFocusEffect } from "expo-router";
+import React, { useState } from "react";
 import {
   Dimensions,
   ScrollView,
@@ -19,7 +20,7 @@ export default function Stats() {
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const categoryTotals: { [key: string]: number } = {};
-  const { transactions } = useTransactionStore();
+  const [transactions, setTransactions] = useState<any[]>([]);
   const screenWidth = Dimensions.get("window").width;
 
   const getCategoryColor = (category: string) => {
@@ -134,6 +135,16 @@ export default function Stats() {
     setSelectedDate(newDate);
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchTransactionsData = async () => {
+        const transactionsData = await fetchTransactions();
+        setTransactions(transactionsData);
+      };
+      fetchTransactionsData();
+    }, []),
+  );
+
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
       {/* Time FILTER BUTTONS */}
@@ -152,7 +163,7 @@ export default function Stats() {
           return (
             <TouchableOpacity
               key={filter}
-              onPress={() => setFilterType(filter)}
+              onPress={() => setFilterType(filter as any)}
               style={{
                 paddingVertical: 12,
                 alignItems: "center",
@@ -203,7 +214,7 @@ export default function Stats() {
           return (
             <TouchableOpacity
               key={type}
-              onPress={() => setChartType(type)}
+              onPress={() => setChartType(type as any)}
               style={{
                 paddingVertical: 8,
                 paddingHorizontal: 20,
