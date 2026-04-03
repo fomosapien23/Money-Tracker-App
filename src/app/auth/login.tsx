@@ -1,12 +1,12 @@
+import { useTheme } from "@/src/context/ThemeContext";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,10 +15,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signIn } from "../../services/authService";
+import { createAuthScreenStyles } from "./authScreenStyles";
 
 export default function Login() {
+  const { colors, resolved } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const themed = useMemo(
+    () => createAuthScreenStyles(colors, resolved),
+    [colors, resolved],
+  );
 
   const handleLogin = async () => {
     try {
@@ -29,7 +36,9 @@ export default function Login() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[themed.container, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -39,37 +48,44 @@ export default function Login() {
             contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.card}>
-              <Text style={styles.title}>Welcome Back 👋</Text>
-              <Text style={styles.subtitle}>Login to continue</Text>
+            <View style={themed.card}>
+              <Text style={themed.title}>Welcome Back 👋</Text>
+              <Text style={themed.subtitle}>Login to continue</Text>
 
               <TextInput
-                style={styles.input}
+                style={themed.input}
                 placeholder="Email"
-                placeholderTextColor="#888"
+                placeholderTextColor={colors.placeholder}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
+                autoCapitalize="none"
+                cursorColor={colors.primary}
+                selectionColor={colors.primary}
+                underlineColorAndroid="transparent"
               />
 
               <TextInput
-                style={styles.input}
+                style={themed.input}
                 placeholder="Password"
-                placeholderTextColor="#888"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                cursorColor={colors.primary}
+                selectionColor={colors.primary}
+                underlineColorAndroid="transparent"
               />
 
-              <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Login</Text>
+              <TouchableOpacity style={themed.button} onPress={handleLogin}>
+                <Text style={themed.buttonText}>Login</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={{ marginTop: 20 }}
                 onPress={() => router.push("/auth/register")}
               >
-                <Text style={styles.link}>New user? Create account</Text>
+                <Text style={themed.link}>New user? Create account</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -78,59 +94,3 @@ export default function Login() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f7fb",
-  },
-  card: {
-    backgroundColor: "#fff",
-    margin: 20,
-    padding: 25,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 5,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 25,
-    textAlign: "center",
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
-    backgroundColor: "#fafafa",
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  link: {
-    textAlign: "center",
-    color: "#007AFF",
-    fontWeight: "600",
-  },
-});

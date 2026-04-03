@@ -1,5 +1,6 @@
+import { useTheme } from "@/src/context/ThemeContext";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -7,7 +8,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -16,9 +16,15 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { signUp } from "../../services/authService";
+import { createAuthScreenStyles } from "./authScreenStyles";
 
 export default function Register() {
   const router = useRouter();
+  const { colors, resolved } = useTheme();
+  const themed = useMemo(
+    () => createAuthScreenStyles(colors, resolved),
+    [colors, resolved],
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +49,9 @@ export default function Register() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[themed.container, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -53,38 +61,44 @@ export default function Register() {
             contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
             keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.card}>
-              <Text style={styles.title}>Create Account 🚀</Text>
-              <Text style={styles.subtitle}>Sign up to get started</Text>
+            <View style={themed.card}>
+              <Text style={themed.title}>Create Account 🚀</Text>
+              <Text style={themed.subtitle}>Sign up to get started</Text>
 
               <TextInput
-                style={styles.input}
+                style={themed.input}
                 placeholder="Email"
-                placeholderTextColor="#888"
+                placeholderTextColor={colors.placeholder}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 value={email}
                 onChangeText={setEmail}
+                cursorColor={colors.primary}
+                selectionColor={colors.primary}
+                underlineColorAndroid="transparent"
               />
 
               <TextInput
-                style={styles.input}
+                style={themed.input}
                 placeholder="Password"
-                placeholderTextColor="#888"
+                placeholderTextColor={colors.placeholder}
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                cursorColor={colors.primary}
+                selectionColor={colors.primary}
+                underlineColorAndroid="transparent"
               />
 
               <TouchableOpacity
-                style={[styles.button, loading && { opacity: 0.7 }]}
+                style={[themed.button, loading && { opacity: 0.7 }]}
                 onPress={handleSignup}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.buttonText}>Sign Up</Text>
+                  <Text style={themed.buttonText}>Sign Up</Text>
                 )}
               </TouchableOpacity>
 
@@ -92,7 +106,9 @@ export default function Register() {
                 style={{ marginTop: 20 }}
                 onPress={() => router.push("/auth/login")}
               >
-                <Text style={styles.link}>Already have an account? Login</Text>
+                <Text style={themed.link}>
+                  Already have an account? Login
+                </Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -101,59 +117,3 @@ export default function Register() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f7fb",
-  },
-  card: {
-    backgroundColor: "#fff",
-    margin: 20,
-    padding: 25,
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    marginBottom: 5,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 25,
-    textAlign: "center",
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
-    backgroundColor: "#fafafa",
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  link: {
-    textAlign: "center",
-    color: "#007AFF",
-    fontWeight: "600",
-  },
-});
