@@ -66,3 +66,6 @@ export function createAuthScreenStyles(
     },
   });
 }
+
+const AuthScreenStylesDefault = () => null;
+export default AuthScreenStylesDefault;
