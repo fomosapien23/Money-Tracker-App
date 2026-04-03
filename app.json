@@ -5,6 +5,11 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/icons/splash-icon-dark.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "scheme": "moneyapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -38,11 +43,11 @@
         "expo-splash-screen",
         {
           "image": "./assets/icons/splash-icon-dark.png",
-          "imageWidth": 200,
+          "imageWidth": 240,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
-            "image": "./assets/icons/splash-icon-light.png", 
+            "image": "./assets/icons/ios-dark.png",
             "backgroundColor": "#000000"
           }
         }
@@ -55,6 +60,9 @@
     },
     "extra": {
       "router": {},
+      "aiBackendUrl": "http://192.168.1.8:4000",
+      "supabaseUrl": "https://ddqutconvazyjrimbyhf.supabase.co",
+      "supabaseAnonKey": "sb_publishable_TnyXKCMfxKCQX8qcXjI0_g_vvfTmgx9",
       "eas": {
         "projectId": "457fd59c-c1dd-4737-bfb0-b993e917e557"
       }

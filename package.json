@@ -8,10 +8,12 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "ai:dev": "npm --prefix backend run dev"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@openrouter/sdk": "^0.9.11",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-native-picker/picker": "2.11.1",
     "@react-navigation/bottom-tabs": "^7.4.0",

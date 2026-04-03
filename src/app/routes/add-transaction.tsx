@@ -1,3 +1,4 @@
+import { useTheme } from "@/src/context/ThemeContext";
 import { supabase } from "@/src/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -20,6 +21,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AddTransaction() {
+  const { colors } = useTheme();
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -212,9 +214,13 @@ export default function AddTransaction() {
   }, [categories, pendingCategory]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <View style={styles.header}>
-        <Text style={styles.heading}>{"Add Transaction"}</Text>
+        <Text style={[styles.heading, { color: colors.text }]}>
+          {"Add Transaction"}
+        </Text>
       </View>
 
       <TextInput

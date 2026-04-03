@@ -1,27 +1,46 @@
-import { fetchTransactions } from "@/src/services/transactionService";
-import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "expo-router";
-import React, { useState } from "react";
+import type { AppColors } from "@/src/context/ThemeContext";
+import { useTheme } from "@/src/context/ThemeContext";
 import {
-  Dimensions,
+  filterTransactionsByTime,
+  getDateRangeForFilter,
+} from "@/src/features/ai/mapper";
+import type { AiMode, TimeFilter } from "@/src/features/ai/types";
+import { useAiInsights } from "@/src/features/ai/useAiInsights";
+import { fetchTransactions } from "@/src/services/transactionService";
+import type { Transaction } from "@/src/type/transaction";
+import { Ionicons } from "@expo/vector-icons";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useFocusEffect } from "expo-router";
+import React, { useMemo, useState } from "react";
+import {
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 export default function Stats() {
-  const [filterType, setFilterType] = useState<
-    "overall" | "monthly" | "yearly"
-  >("overall");
+  const { colors, resolved } = useTheme();
+  const styles = useMemo(() => createStatsStyles(colors), [colors]);
+
+  const tabBarHeight = useBottomTabBarHeight();
+  const { bottom: safeBottom } = useSafeAreaInsets();
+  const scrollBottomPad = Math.max(tabBarHeight, 60 + safeBottom) + 16;
+
+  const [filterType, setFilterType] = useState<TimeFilter>("overall");
   const [chartType, setChartType] = useState<"expense" | "income">("expense");
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const categoryTotals: { [key: string]: number } = {};
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const screenWidth = Dimensions.get("window").width;
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [aiMode, setAiMode] = useState<AiMode>("spending-summary");
+  const { aiLoading, aiError, aiResult, askAi } = useAiInsights();
 
   const getCategoryColor = (category: string) => {
     let hash = 0;
@@ -29,25 +48,19 @@ export default function Stats() {
       hash = category.charCodeAt(i) + ((hash << 5) - hash);
     }
     const hue = Math.abs(hash % 360); // prevent negative
-    return `hsl(${hue}, 70%, 60%)`;
+    const lightness = resolved === "dark" ? "58%" : "60%";
+    return `hsl(${hue}, 65%, ${lightness})`;
   };
 
-  const filteredByTime = transactions.filter((t) => {
-    const txDate = new Date(t.date);
-
-    if (filterType === "monthly") {
-      return (
-        txDate.getMonth() === selectedDate.getMonth() &&
-        txDate.getFullYear() === selectedDate.getFullYear()
-      );
-    }
-
-    if (filterType === "yearly") {
-      return txDate.getFullYear() === selectedDate.getFullYear();
-    }
-
-    return true;
-  });
+  const filteredByTime = useMemo(
+    () =>
+      filterTransactionsByTime({
+        transactions,
+        filterType,
+        selectedDate,
+      }),
+    [transactions, filterType, selectedDate],
+  );
 
   const typeTransactions = filteredByTime.filter((t) => t.type === chartType);
 
@@ -62,7 +75,7 @@ export default function Stats() {
 
   const totalAmount = typeTransactions.reduce((sum, t) => sum + t.amount, 0);
 
-  const pieData = categoryKeys.map((key, index) => ({
+  const pieData = categoryKeys.map((key) => ({
     value: categoryTotals[key],
     text:
       totalAmount === 0
@@ -72,26 +85,19 @@ export default function Stats() {
     color: getCategoryColor(key),
   }));
 
-  const filteredTransactions = transactions.filter((t) => {
-    const txDate = new Date(t.date);
-
-    if (filterType === "monthly") {
-      return (
-        txDate.getMonth() === selectedDate.getMonth() &&
-        txDate.getFullYear() === selectedDate.getFullYear()
-      );
-    }
-
-    if (filterType === "yearly") {
-      return txDate.getFullYear() === selectedDate.getFullYear();
-    }
-
-    return true;
-  });
-
-  const expenseTransactions = filteredTransactions.filter(
-    (t) => t.type === "expense",
+  const currentPeriod = useMemo(
+    () => getDateRangeForFilter(filterType, selectedDate),
+    [filterType, selectedDate],
   );
+
+  const handleAskAi = async () => {
+    await askAi({
+      mode: aiMode,
+      transactions: filteredByTime,
+      period: currentPeriod,
+      currency: "INR",
+    });
+  };
 
   const formatMonthYear = () => {
     return selectedDate.toLocaleString("default", {
@@ -146,14 +152,14 @@ export default function Stats() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+    <SafeAreaView style={styles.screen} edges={["top"]}>
       {/* Time FILTER BUTTONS */}
       <View
         style={{
           flexDirection: "row",
           justifyContent: "space-around",
           borderBottomWidth: 1,
-          borderBottomColor: "#e9ecef",
+          borderBottomColor: colors.border,
           marginTop: 20,
         }}
       >
@@ -174,7 +180,7 @@ export default function Stats() {
                 style={{
                   fontSize: 15,
                   fontWeight: "600",
-                  color: isActive ? "#1971C2" : "#868e96",
+                  color: isActive ? colors.primary : colors.textMuted,
                   textTransform: "capitalize",
                 }}
               >
@@ -186,7 +192,7 @@ export default function Stats() {
                 <View
                   style={{
                     height: 3,
-                    backgroundColor: "#1971C2",
+                    backgroundColor: colors.primary,
                     width: "60%",
                     marginTop: 6,
                     borderRadius: 2,
@@ -209,7 +215,7 @@ export default function Stats() {
         {["expense", "income"].map((type) => {
           const isActive = chartType === type;
 
-          const activeColor = "#1971C2";
+          const activeColor = colors.primary;
 
           return (
             <TouchableOpacity
@@ -252,10 +258,12 @@ export default function Stats() {
           }}
         >
           <TouchableOpacity onPress={goToPrevious}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
 
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>
+          <Text
+            style={{ fontSize: 16, fontWeight: "600", color: colors.text }}
+          >
             {filterType === "monthly"
               ? formatMonthYear()
               : selectedDate.getFullYear()}
@@ -268,19 +276,125 @@ export default function Stats() {
               opacity: isFutureMonth || isFutureYear ? 0.3 : 1,
             }}
           >
-            <Ionicons name="chevron-forward" size={24} color="#000" />
+            <Ionicons name="chevron-forward" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
       )}
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 30 }}>
-        {/* PIE CHART FIRST */}
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: scrollBottomPad },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.aiCard}>
+            <View style={styles.aiCardHeader}>
+            <View style={styles.aiIconBadge}>
+              <Ionicons name="sparkles" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.aiHeaderText}>
+              <Text style={styles.aiCardTitle}>AI insights</Text>
+              <Text style={styles.aiCardSubtitle}>
+                Choose a focus, then generate tips for the filters above
+              </Text>
+            </View>
+          </View>
+
+          <Text style={styles.aiFieldLabel}>Focus</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.aiChipsRow}
+          >
+            {[
+              { key: "spending-summary", label: "Summary" },
+              { key: "budget-coach", label: "Budget coach" },
+              { key: "saving-advice", label: "Saving advice" },
+            ].map((mode) => {
+              const isActive = aiMode === mode.key;
+              return (
+                <TouchableOpacity
+                  key={mode.key}
+                  onPress={() => setAiMode(mode.key as AiMode)}
+                  style={[
+                    styles.aiChip,
+                    isActive && styles.aiChipActive,
+                  ]}
+                  activeOpacity={0.85}
+                >
+                  <Text
+                    style={[
+                      styles.aiChipText,
+                      isActive && styles.aiChipTextActive,
+                    ]}
+                  >
+                    {mode.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          <TouchableOpacity
+            onPress={handleAskAi}
+            disabled={aiLoading}
+            style={[
+              styles.aiCta,
+              aiLoading && styles.aiCtaDisabled,
+            ]}
+            activeOpacity={0.9}
+          >
+            <Ionicons
+              name="sparkles-outline"
+              size={18}
+              color="#fff"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.aiCtaText}>
+              {aiLoading ? "Analyzing…" : "Generate insights"}
+            </Text>
+          </TouchableOpacity>
+
+          {aiError ? (
+            <View style={styles.aiErrorBox}>
+              <Ionicons name="alert-circle" size={18} color={colors.danger} />
+              <Text style={styles.aiErrorText}>{aiError}</Text>
+            </View>
+          ) : null}
+
+          {aiResult ? (
+            <View style={styles.aiResultSection}>
+              <Text style={styles.aiResultHeading}>Response</Text>
+              <View style={styles.aiResultPanel}>
+                <Text style={styles.aiResultSummary}>{aiResult.summaryText}</Text>
+                {aiResult.bulletPoints?.length > 0 ? (
+                  <View style={styles.aiBullets}>
+                    {aiResult.bulletPoints.map((point, idx) => (
+                      <View key={idx} style={styles.aiBulletRow}>
+                        <Ionicons
+                          name="ellipse"
+                          size={6}
+                          color={colors.primary}
+                          style={styles.aiBulletDot}
+                        />
+                        <Text style={styles.aiBulletText}>{point}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.sectionRule} />
+
+        {/* PIE CHART */}
         {pieData.length === 0 ? (
-          <Text style={{ textAlign: "center", marginTop: 20 }}>
-            No data to show
-          </Text>
+          <Text style={styles.chartEmpty}>No data to show</Text>
         ) : (
-          <View style={{ alignItems: "center", marginTop: 20 }}>
+          <View style={styles.chartWrap}>
             <PieChart
               data={pieData}
               donut
@@ -290,18 +404,28 @@ export default function Stats() {
               textSize={14}
               centerLabelComponent={() => (
                 <View style={{ alignItems: "center" }}>
-                  <Text style={{ fontWeight: "bold", fontSize: 18 }}>
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      fontSize: 18,
+                      color: colors.text,
+                    }}
+                  >
                     ₹ {totalAmount}
                   </Text>
-                  <Text>{chartType.toUpperCase()}</Text>
+                  <Text style={{ color: colors.textSecondary }}>
+                    {chartType.toUpperCase()}
+                  </Text>
                 </View>
               )}
             />
           </View>
         )}
 
-        {/* CATEGORY LIST BELOW */}
-        <View style={{ marginTop: 30 }}>
+        <View style={styles.sectionRule} />
+
+        {/* CATEGORY LIST */}
+        <View style={styles.categorySection}>
           {Object.keys(categoryTotals).length === 0
             ? null
             : Object.keys(categoryTotals)
@@ -321,8 +445,8 @@ export default function Stats() {
                         alignItems: "center",
                         paddingHorizontal: 20,
                         paddingVertical: 12,
-                        borderBottomWidth: 0.5,
-                        borderColor: "#ddd",
+                        borderBottomWidth: StyleSheet.hairlineWidth,
+                        borderColor: colors.border,
                       }}
                     >
                       {/* Left Side */}
@@ -339,15 +463,23 @@ export default function Stats() {
                           }}
                         />
 
-                        <Text style={{ fontWeight: "500" }}>{key}</Text>
+                        <Text
+                          style={{ fontWeight: "500", color: colors.text }}
+                        >
+                          {key}
+                        </Text>
                       </View>
 
                       {/* Right Side */}
                       <View style={{ alignItems: "flex-end" }}>
-                        <Text style={{ fontWeight: "600" }}>
+                        <Text
+                          style={{ fontWeight: "600", color: colors.text }}
+                        >
                           ₹ {categoryTotals[key]}
                         </Text>
-                        <Text style={{ fontSize: 12, color: "gray" }}>
+                        <Text
+                          style={{ fontSize: 12, color: colors.textMuted }}
+                        >
                           {percentage}%
                         </Text>
                       </View>
@@ -358,4 +490,190 @@ export default function Stats() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function createStatsStyles(colors: AppColors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      paddingTop: 8,
+    },
+    aiCard: {
+      marginHorizontal: 16,
+      marginBottom: 4,
+      padding: 16,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.border,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 3,
+    },
+    aiCardHeader: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      marginBottom: 16,
+      paddingBottom: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    aiIconBadge: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: colors.primaryMuted,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 12,
+    },
+    aiHeaderText: {
+      flex: 1,
+    },
+    aiCardTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 4,
+    },
+    aiCardSubtitle: {
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.textSecondary,
+    },
+    aiFieldLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      marginBottom: 8,
+    },
+    aiChipsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingBottom: 4,
+      gap: 8,
+    },
+    aiChip: {
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+    },
+    aiChipActive: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primary,
+    },
+    aiChipText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.textSecondary,
+    },
+    aiChipTextActive: {
+      color: "#fff",
+    },
+    aiCta: {
+      marginTop: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 14,
+      borderRadius: 12,
+      backgroundColor: colors.primary,
+    },
+    aiCtaDisabled: {
+      backgroundColor: colors.textMuted,
+    },
+    aiCtaText: {
+      color: "#fff",
+      fontWeight: "700",
+      fontSize: 15,
+    },
+    aiErrorBox: {
+      marginTop: 12,
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
+      padding: 12,
+      borderRadius: 10,
+      backgroundColor: colors.errorSurface,
+      borderWidth: 1,
+      borderColor: colors.errorBorder,
+    },
+    aiErrorText: {
+      flex: 1,
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.danger,
+    },
+    aiResultSection: {
+      marginTop: 16,
+    },
+    aiResultHeading: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      marginBottom: 8,
+    },
+    aiResultPanel: {
+      padding: 14,
+      borderRadius: 12,
+      backgroundColor: colors.surfaceMuted,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.primary,
+    },
+    aiResultSummary: {
+      fontSize: 14,
+      lineHeight: 21,
+      color: colors.text,
+    },
+    aiBullets: {
+      marginTop: 10,
+      gap: 8,
+    },
+    aiBulletRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+    },
+    aiBulletDot: {
+      marginTop: 6,
+      marginRight: 10,
+    },
+    aiBulletText: {
+      flex: 1,
+      fontSize: 13,
+      lineHeight: 19,
+      color: colors.textSecondary,
+    },
+    sectionRule: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
+      marginHorizontal: 20,
+      marginVertical: 20,
+    },
+    chartEmpty: {
+      textAlign: "center",
+      marginTop: 8,
+      color: colors.textMuted,
+      fontSize: 15,
+    },
+    chartWrap: {
+      alignItems: "center",
+      paddingHorizontal: 16,
+    },
+    categorySection: {
+      marginTop: 8,
+      marginBottom: 0,
+    },
+  });
 }

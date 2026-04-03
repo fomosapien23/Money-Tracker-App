@@ -1,6 +1,8 @@
+import { useTheme } from "@/src/context/ThemeContext";
 import { useTransactions } from "@/src/hooks/useTransactions";
 import { deleteTransaction } from "@/src/services/transactionService";
 import { Ionicons } from "@expo/vector-icons";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
@@ -11,7 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { Transaction } from "../../type/transaction";
 
 const groupTransactions = (transactions: Transaction[]) => {
@@ -52,8 +57,13 @@ const groupTransactions = (transactions: Transaction[]) => {
 };
 
 export default function Home() {
-  const { transactions, loading, reload } = useTransactions();
+  const { colors } = useTheme();
+  const { transactions, reload } = useTransactions();
   const router = useRouter();
+  const tabBarHeight = useBottomTabBarHeight();
+  const { bottom: safeBottom } = useSafeAreaInsets();
+  const listBottomPad =
+    Math.max(tabBarHeight, 60 + safeBottom) + 16;
 
   useFocusEffect(
     useCallback(() => {
@@ -72,12 +82,17 @@ export default function Home() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+      edges={["top"]}
+    >
       <View style={styles.header}>
-        <Text style={styles.heading}>{"Money Tracker"}</Text>
+        <Text style={[styles.heading, { color: colors.text }]}>
+          {"Money Tracker"}
+        </Text>
       </View>
 
-      <View style={styles.balanceCard}>
+      <View style={[styles.balanceCard, { backgroundColor: colors.balanceCardBg }]}>
         <Text style={styles.balanceLabel}>Total Balance</Text>
         <Text style={styles.balanceAmount}>
           ₹ {(totalIncome - totalExpense).toFixed(2)}
@@ -85,108 +100,171 @@ export default function Home() {
       </View>
 
       <View style={styles.row}>
-        <View style={[styles.card, styles.incomeCard]}>
-          <Text>Income</Text>
-          <Text style={styles.amount}>₹ {totalIncome.toFixed(2)}</Text>
+        <View
+          style={[
+            styles.card,
+            styles.summaryCard,
+            {
+              backgroundColor: colors.incomeTint,
+              marginRight: 8,
+              borderLeftColor: colors.incomeAccent,
+            },
+          ]}
+        >
+          <Text
+            style={[styles.summaryLabel, { color: colors.textSecondary }]}
+          >
+            Income
+          </Text>
+          <Text style={[styles.amount, { color: colors.incomeAmount }]}>
+            ₹ {totalIncome.toFixed(2)}
+          </Text>
         </View>
-        <View style={[styles.card, styles.expenseCard]}>
-          <Text>Expense</Text>
-          <Text style={styles.amount}>₹ {totalExpense.toFixed(2)}</Text>
+        <View
+          style={[
+            styles.card,
+            styles.summaryCard,
+            {
+              backgroundColor: colors.expenseTint,
+              borderLeftColor: colors.expenseAccent,
+            },
+          ]}
+        >
+          <Text
+            style={[styles.summaryLabel, { color: colors.textSecondary }]}
+          >
+            Expense
+          </Text>
+          <Text style={[styles.amount, { color: colors.expenseAmount }]}>
+            ₹ {totalExpense.toFixed(2)}
+          </Text>
         </View>
       </View>
 
-      {/* <Button title="➕ Add Transaction" onPress={() => router.push("/add")} /> */}
+      <Text style={[styles.transactionsTitle, { color: colors.text }]}>
+        Transactions
+      </Text>
 
-      <View style={styles.container}>
-        {/* 🔥 SCREEN TITLE */}
-        <Text style={styles.heading}>Transactions</Text>
-
-        <SectionList<Transaction>
-          sections={sections}
-          showsVerticalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          renderSectionHeader={({ section: { title } }) => (
-            <Text
+      <SectionList<Transaction>
+        style={styles.list}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: listBottomPad },
+        ]}
+        sections={sections}
+        showsVerticalScrollIndicator={false}
+        keyExtractor={(item) => item.id}
+        renderSectionHeader={({ section: { title } }) => (
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "bold",
+              marginTop: 15,
+              marginBottom: 8,
+              color: colors.textSecondary,
+            }}
+          >
+            {title}
+          </Text>
+        )}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.listRowBg,
+              padding: 14,
+              borderRadius: 12,
+              marginBottom: 8,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: colors.border,
+            }}
+            activeOpacity={0.85}
+            onPress={() =>
+              router.push({
+                pathname: "/edit/[id]",
+                params: { id: item.id },
+              })
+            }
+          >
+            <View
               style={{
-                fontSize: 16,
-                fontWeight: "bold",
-                marginTop: 15,
-                marginBottom: 8,
-                color: "#555",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 6,
               }}
             >
-              {title}
-            </Text>
-          )}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#fff",
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 8,
-              }}
-              onPress={() =>
-                router.push({
-                  pathname: "/edit/[id]",
-                  params: { id: item.id },
-                })
-              }
-            >
-              <View
+              <Text
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 6,
+                  fontWeight: "500",
+                  fontSize: 14,
+                  color: colors.textSecondary,
                 }}
               >
-                <Text
-                  style={{ fontWeight: "500", fontSize: 14, color: "#666" }}
-                >
-                  {item.category}
-                </Text>
-                <TouchableOpacity
-                  onPress={async () => {
-                    await deleteTransaction(item.id);
-                    reload(); // refresh from DB
-                  }}
-                >
-                  <Ionicons name="trash" size={20} color="red" />
-                </TouchableOpacity>
-              </View>
+                {item.category}
+              </Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  await deleteTransaction(item.id);
+                  reload(); // refresh from DB
+                }}
+              >
+                <Ionicons name="trash-outline" size={20} color={colors.danger} />
+              </TouchableOpacity>
+            </View>
 
-              {/* 🔹 Second Row → Title + Amount */}
-              <View
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text
                 style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  fontWeight: "600",
+                  fontSize: 16,
+                  color: colors.text,
                 }}
               >
-                <Text style={{ fontWeight: "600", fontSize: 16 }}>
-                  {item.title}
-                </Text>
-                <Text
-                  style={{
-                    fontWeight: "600",
-                    fontSize: 16,
-                    color: item.type === "income" ? "green" : "red",
-                  }}
-                >
-                  {item.type === "income" ? "+" : "-"} ₹{item.amount}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+                {item.title}
+              </Text>
+              <Text
+                style={{
+                  fontWeight: "600",
+                  fontSize: 16,
+                  color:
+                    item.type === "income"
+                      ? colors.incomeAmount
+                      : colors.expenseAmount,
+                }}
+              >
+                {item.type === "income" ? "+" : "-"} ₹{item.amount}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+        ListEmptyComponent={
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+            No transactions yet
+          </Text>
+        }
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  screen: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    flexGrow: 1,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -199,9 +277,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  transactionsTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 24,
+    fontSize: 15,
+  },
 
   balanceCard: {
-    backgroundColor: "#222",
     padding: 20,
     borderRadius: 16,
     marginBottom: 15,
@@ -215,10 +302,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
     borderRadius: 12,
-    marginRight: 10,
   },
-  incomeCard: { backgroundColor: "#ddffdd" },
-  expenseCard: { backgroundColor: "#ffdddd" },
+  summaryCard: {
+    borderLeftWidth: 3,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
 
   amount: { fontSize: 18, fontWeight: "bold" },
 
