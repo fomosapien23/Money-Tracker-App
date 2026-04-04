@@ -1,28 +1,55 @@
 /**
  * Expo merges `app.json` into `config` before calling this export.
- * We override `extra.aiBackendUrl` from the environment for EAS builds.
  *
- * Set EXPO_PUBLIC_AI_BACKEND_URL for EAS (Preview + Production) so the APK/IPA
- * calls your HTTPS backend; otherwise the build falls back to app.json `extra.aiBackendUrl`
- * (default localhost — AI will not work on a real device until you set the var or URL).
+ * - Local `expo start`: uses app.json `extra.aiBackendUrl` (localhost → rewritten in dev).
+ * - EAS builds: uses `EXPO_PUBLIC_AI_BACKEND_URL` if set, else `ai-backend.url.json` `baseUrl`,
+ *   else falls back to app.json.
+ *
+ * Edit `ai-backend.url.json` to match your deployed backend (no trailing slash).
  */
+const path = require("path");
+
+function readDeployedBaseUrl() {
+  try {
+    const { baseUrl } = require(path.join(__dirname, "ai-backend.url.json"));
+    return typeof baseUrl === "string" ? baseUrl.trim().replace(/\/+$/, "") : "";
+  } catch {
+    return "";
+  }
+}
+
+function badProductionAiUrl(url) {
+  return (
+    !url ||
+    url.startsWith("http://localhost") ||
+    url.startsWith("http://127.0.0.1") ||
+    !url.startsWith("https://")
+  );
+}
+
 module.exports = ({ config }) => {
   const fromEnv = process.env.EXPO_PUBLIC_AI_BACKEND_URL?.trim();
   const placeholder =
     "https://REPLACE_WITH_YOUR_DEPLOYED_BACKEND_URL" === fromEnv;
 
   const profile = process.env.EAS_BUILD_PROFILE;
-  if (profile === "production" && (!fromEnv || placeholder)) {
+  const onEas = Boolean(process.env.EAS_BUILD || profile);
+
+  const fromFile = onEas ? readDeployedBaseUrl() : "";
+
+  const aiBackendUrl = (() => {
+    if (fromEnv && !placeholder) return fromEnv.replace(/\/+$/, "");
+    if (fromFile) return fromFile;
+    const fallback = config.extra?.aiBackendUrl ?? "http://localhost:4000";
+    return String(fallback).trim().replace(/\/+$/, "") || "http://localhost:4000";
+  })();
+
+  if (profile === "production" && badProductionAiUrl(aiBackendUrl)) {
     throw new Error(
-      "Production EAS build requires EXPO_PUBLIC_AI_BACKEND_URL: set it under Project → Environment variables " +
-        "in expo.dev (or `eas env:create`) to your deployed HTTPS AI API base URL (no trailing slash).",
+      "Production EAS build needs an https AI backend URL: set EXPO_PUBLIC_AI_BACKEND_URL " +
+        "or set `baseUrl` in ai-backend.url.json to your deployed API (no trailing slash).",
     );
   }
-
-  const aiBackendUrl =
-    fromEnv && !placeholder
-      ? fromEnv
-      : (config.extra?.aiBackendUrl ?? "http://localhost:4000");
 
   return {
     ...config,
