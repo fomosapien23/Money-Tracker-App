@@ -60,7 +60,7 @@
     },
     "extra": {
       "router": {},
-      "aiBackendUrl": "http://192.168.1.8:4000",
+      "aiBackendUrl": "http://localhost:4000",
       "supabaseUrl": "https://ddqutconvazyjrimbyhf.supabase.co",
       "supabaseAnonKey": "sb_publishable_TnyXKCMfxKCQX8qcXjI0_g_vvfTmgx9",
       "eas": {

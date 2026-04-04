@@ -31,9 +31,16 @@ export async function analyzeTransactionsWithAi(
     });
   } catch (error: any) {
     if (error?.message?.includes("Network request failed")) {
-      throw new Error(
-        `Cannot reach AI backend at ${AI_BACKEND_URL}. Start backend with 'npm run ai:dev' and ensure phone + PC are on same network.`,
-      );
+      const lanOrLocal =
+        /localhost|127\.0\.0\.1|192\.168\.|10\.\d+\.|172\.(1[6-9]|2\d|3[01])\./i.test(
+          AI_BACKEND_URL,
+        );
+      const hint = __DEV__
+        ? "Start backend with `npm run ai:dev` (from repo root) and use the same Wi‑Fi, or set EXPO_PUBLIC_AI_BACKEND_URL in `.env` to your HTTPS API."
+        : lanOrLocal
+          ? "This build is pointing at a local/LAN URL. Rebuild with EXPO_PUBLIC_AI_BACKEND_URL set to your public HTTPS backend (e.g. Vercel) in EAS environment variables."
+          : "Check that the AI backend is deployed and reachable.";
+      throw new Error(`Cannot reach AI backend at ${AI_BACKEND_URL}. ${hint}`);
     }
     throw error;
   }

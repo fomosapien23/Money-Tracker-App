@@ -6,7 +6,19 @@ type AppExtra = {
 };
 
 const extra = (Constants.expoConfig?.extra ?? {}) as AppExtra;
-const configuredAiBackendUrl = extra.aiBackendUrl ?? "http://localhost:4000";
+
+/** Inlined at bundle time from .env / EAS env; takes precedence over app.json `extra`. */
+const publicAiBackendUrl = process.env.EXPO_PUBLIC_AI_BACKEND_URL?.trim();
+
+function normalizeBaseUrl(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
+const configuredAiBackendUrl = normalizeBaseUrl(
+  publicAiBackendUrl ||
+    (typeof extra.aiBackendUrl === "string" ? extra.aiBackendUrl.trim() : "") ||
+    "http://localhost:4000",
+);
 
 function resolveDevAiBackendUrl(url: string) {
   if (!__DEV__) return url;

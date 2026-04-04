@@ -2,8 +2,9 @@
  * Expo merges `app.json` into `config` before calling this export.
  * We override `extra.aiBackendUrl` from the environment for EAS builds.
  *
- * Set EXPO_PUBLIC_AI_BACKEND_URL in EAS environment variables, e.g.
- *   https://your-app.vercel.app
+ * Set EXPO_PUBLIC_AI_BACKEND_URL for EAS (Preview + Production) so the APK/IPA
+ * calls your HTTPS backend; otherwise the build falls back to app.json `extra.aiBackendUrl`
+ * (default localhost — AI will not work on a real device until you set the var or URL).
  */
 module.exports = ({ config }) => {
   const fromEnv = process.env.EXPO_PUBLIC_AI_BACKEND_URL?.trim();
