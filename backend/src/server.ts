@@ -1,4 +1,4 @@
-import { app } from "./app.js";
+import { app } from "../api/lib/app.js";
 
 const port = Number(process.env.PORT ?? 4000);
 
