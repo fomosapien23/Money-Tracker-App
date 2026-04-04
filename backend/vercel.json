@@ -1,0 +1,8 @@
+{
+    "functions": {
+      "backend/api/index.ts": {
+        "runtime": "nodejs24.x"
+      }
+    }
+  }
+  
