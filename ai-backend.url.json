@@ -1,3 +1,4 @@
 {
-  "baseUrl": "https://money-app-ai-backend.vercel.app"
+  "_info": "Stable Production domain only (not the …-randomid-… deployment URL). In Vercel: Project → Settings → Deployment Protection → disable for Production so the mobile app can call the API (no SSO in fetch).",
+  "baseUrl": "https://money-tracker-app-git-main-fomosapien23s-projects.vercel.app"
 }

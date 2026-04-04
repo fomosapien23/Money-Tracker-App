@@ -37,6 +37,14 @@ module.exports = ({ config }) => {
 
   const fromFile = onEas ? readDeployedBaseUrl() : "";
 
+  if (onEas && !(fromEnv && !placeholder) && !fromFile) {
+    throw new Error(
+      "EAS build: set a real AI backend URL. Either set EXPO_PUBLIC_AI_BACKEND_URL in Expo env, " +
+        "or set baseUrl in ai-backend.url.json to the URL from Vercel (Project → Settings → Domains). " +
+        "The name is not your package.json name — deploy backend/ first (Vercel Root Directory: backend), then paste that https://….vercel.app URL.",
+    );
+  }
+
   const aiBackendUrl = (() => {
     if (fromEnv && !placeholder) return fromEnv.replace(/\/+$/, "");
     if (fromFile) return fromFile;
