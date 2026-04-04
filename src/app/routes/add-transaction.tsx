@@ -6,7 +6,6 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
-  Button,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -21,8 +20,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AddTransaction() {
-  const { colors } = useTheme();
+  const { colors, resolved } = useTheme();
   const router = useRouter();
+
+  const inputThemed = {
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.inputFill,
+    color: colors.text,
+  };
 
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -224,49 +229,79 @@ export default function AddTransaction() {
       </View>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, inputThemed]}
         placeholder="Title (e.g., Salary, Groceries)"
         value={title}
         onChangeText={setTitle}
-        placeholderTextColor="#888"
+        placeholderTextColor={colors.placeholder}
+        cursorColor={colors.primary}
+        selectionColor={colors.primary}
+        underlineColorAndroid="transparent"
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, inputThemed]}
         placeholder="Amount (e.g., 500, 20.75)"
         value={amount}
         onChangeText={setAmount}
         keyboardType="numeric"
-        placeholderTextColor="#888"
+        placeholderTextColor={colors.placeholder}
+        cursorColor={colors.primary}
+        selectionColor={colors.primary}
+        underlineColorAndroid="transparent"
       />
 
       <View style={styles.row}>
         <TouchableOpacity
-          style={[styles.typeBtn, type === "expense" && styles.activeExpense]}
+          style={[
+            styles.typeBtn,
+            { borderColor: colors.borderStrong },
+            type === "expense" && {
+              backgroundColor: colors.expenseTint,
+              borderColor: colors.expenseAccent,
+            },
+          ]}
           onPress={() => setType("expense")}
         >
-          <Text>Expense</Text>
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Expense</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.typeBtn, type === "income" && styles.activeIncome]}
+          style={[
+            styles.typeBtn,
+            { borderColor: colors.borderStrong },
+            type === "income" && {
+              backgroundColor: colors.incomeTint,
+              borderColor: colors.incomeAccent,
+            },
+          ]}
           onPress={() => setType("income")}
         >
-          <Text>Income</Text>
+          <Text style={{ color: colors.text, fontWeight: "600" }}>Income</Text>
         </TouchableOpacity>
       </View>
 
       <TouchableOpacity
-        style={styles.inlineInput}
+        style={[
+          styles.inlineInput,
+          { borderColor: colors.borderStrong, backgroundColor: colors.inputFill },
+        ]}
         onPress={() => setShowCategoryDropdown((v) => !v)}
         activeOpacity={0.8}
       >
-        <Text style={styles.inlineLabel}>Category</Text>
+        <Text style={[styles.inlineLabel, { color: colors.textSecondary }]}>
+          Category
+        </Text>
 
         <View style={styles.inlineValueContainer}>
-          <Text style={[styles.inlineValue, !category && { color: "#999" }]}>
+          <Text
+            style={[
+              styles.inlineValue,
+              { color: category ? colors.text : colors.placeholder },
+            ]}
+          >
             {category || "Select"}
           </Text>
-          <Text style={styles.arrow}>▼</Text>
+          <Text style={[styles.arrow, { color: colors.textMuted }]}>▼</Text>
         </View>
       </TouchableOpacity>
 
@@ -280,13 +315,24 @@ export default function AddTransaction() {
           </TouchableWithoutFeedback>
 
           {/* Dropdown */}
-          <View style={styles.popup}>
+          <View
+            style={[
+              styles.popup,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.borderStrong,
+              },
+            ]}
+          >
             <ScrollView
               style={{ maxHeight: 250 }}
               keyboardShouldPersistTaps="handled"
             >
               {categories.map((c) => (
-                <View key={c.id} style={styles.categoryRow}>
+                <View
+                  key={c.id}
+                  style={[styles.categoryRow, { borderBottomColor: colors.border }]}
+                >
                   {/* Select Category */}
                   <TouchableOpacity
                     style={{ flex: 1 }}
@@ -295,7 +341,9 @@ export default function AddTransaction() {
                       setShowCategoryDropdown(false);
                     }}
                   >
-                    <Text style={styles.popupText}>{c.name}</Text>
+                    <Text style={[styles.popupText, { color: colors.text }]}>
+                      {c.name}
+                    </Text>
                   </TouchableOpacity>
 
                   {/* Icons */}
@@ -312,7 +360,7 @@ export default function AddTransaction() {
                         <Ionicons
                           name="pencil-outline"
                           size={20}
-                          color="#ff8800"
+                          color={colors.primary}
                           style={styles.editIcon}
                         />
                       </TouchableOpacity>
@@ -322,7 +370,7 @@ export default function AddTransaction() {
                         <Ionicons
                           name="trash-outline"
                           size={20}
-                          color="#044896"
+                          color={colors.danger}
                         />
                       </TouchableOpacity>
                     </View>
@@ -331,13 +379,22 @@ export default function AddTransaction() {
               ))}
 
               <TouchableOpacity
-                style={[styles.popupItem, styles.addNewItem]}
+                style={[
+                  styles.popupItem,
+                  styles.addNewItem,
+                  {
+                    backgroundColor: colors.surfaceMuted,
+                    borderBottomColor: colors.border,
+                  },
+                ]}
                 onPress={() => {
                   setShowCategoryDropdown(false);
                   setShowAddCategory(true);
                 }}
               >
-                <Text style={styles.addNewText}>➕ Add new category</Text>
+                <Text style={[styles.addNewText, { color: colors.primary }]}>
+                  ➕ Add new category
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -358,8 +415,10 @@ export default function AddTransaction() {
             <View style={styles.backdrop} />
           </TouchableWithoutFeedback>
 
-          <View style={styles.centeredModal}>
-            <Text style={styles.modalTitle}>
+          <View
+            style={[styles.centeredModal, { backgroundColor: colors.surface }]}
+          >
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
               {editingCategory ? "Edit Category" : "Add Category"}
             </Text>
 
@@ -369,7 +428,11 @@ export default function AddTransaction() {
                 editingCategory ? setEditText(text) : setNewCategoryName(text)
               }
               placeholder="Category name"
-              style={styles.input}
+              style={[styles.input, inputThemed]}
+              placeholderTextColor={colors.placeholder}
+              cursorColor={colors.primary}
+              selectionColor={colors.primary}
+              underlineColorAndroid="transparent"
               autoFocus
             />
 
@@ -380,7 +443,9 @@ export default function AddTransaction() {
                   setEditingCategory(null);
                 }}
               >
-                <Text style={styles.cancelBtn}>Cancel</Text>
+                <Text style={[styles.cancelBtn, { color: colors.textMuted }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -388,7 +453,7 @@ export default function AddTransaction() {
                   editingCategory ? handleUpdateCategory : handleAddCategory
                 }
               >
-                <Text style={styles.saveBtn}>
+                <Text style={[styles.saveBtn, { color: colors.primary }]}>
                   {editingCategory ? "Update" : "Add"}
                 </Text>
               </TouchableOpacity>
@@ -398,10 +463,16 @@ export default function AddTransaction() {
       </Modal>
 
       <TouchableOpacity
-        style={styles.dateBtn}
+        style={[
+          styles.dateBtn,
+          {
+            borderColor: colors.borderStrong,
+            backgroundColor: colors.inputFill,
+          },
+        ]}
         onPress={() => setShowDate(true)}
       >
-        <Text>{date.toDateString()}</Text>
+        <Text style={{ color: colors.text, fontSize: 16 }}>{date.toDateString()}</Text>
       </TouchableOpacity>
       {showDate && (
         <DateTimePicker
@@ -412,9 +483,22 @@ export default function AddTransaction() {
             setShowDate(false);
             if (selectedDate) setDate(selectedDate);
           }}
+          {...(Platform.OS === "ios"
+            ? {
+                themeVariant: resolved === "dark" ? ("dark" as const) : ("light" as const),
+                textColor: colors.text,
+                accentColor: colors.primary,
+              }
+            : {})}
         />
       )}
-      <Button title="Save Transaction" onPress={handleSave} />
+      <TouchableOpacity
+        style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.primaryButtonText}>Save Transaction</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -456,13 +540,22 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderRadius: 8,
   },
-  activeExpense: { backgroundColor: "#ffdddd" },
-  activeIncome: { backgroundColor: "#ddffdd" },
   dateBtn: {
     borderWidth: 1,
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
+  },
+  primaryButton: {
+    paddingVertical: 15,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  primaryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 
   modalBox: {
@@ -476,7 +569,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 16,
@@ -485,7 +577,6 @@ const styles = StyleSheet.create({
 
   inlineLabel: {
     fontSize: 14,
-    color: "#555",
     width: 90, // 👈 keeps alignment clean
   },
 
@@ -498,12 +589,10 @@ const styles = StyleSheet.create({
 
   inlineValue: {
     fontSize: 16,
-    color: "#000",
   },
 
   arrow: {
     fontSize: 12,
-    color: "#555",
   },
 
   popup: {
@@ -511,10 +600,8 @@ const styles = StyleSheet.create({
     top: 250, // 👈 adjust if needed
     left: 20,
     right: 20,
-    backgroundColor: "#fff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ccc",
     zIndex: 1000,
     elevation: 5,
   },
@@ -523,21 +610,17 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
 
   popupText: {
     fontSize: 16,
   },
 
-  addNewItem: {
-    backgroundColor: "#f7f7f7",
-  },
+  addNewItem: {},
 
   addNewText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#007AFF",
   },
 
   popupOverlay: {
@@ -576,7 +659,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
 
   categoryName: {
@@ -656,7 +738,6 @@ const styles = StyleSheet.create({
 
   centeredModal: {
     width: "85%",
-    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 16,
     elevation: 10,
@@ -677,12 +758,10 @@ const styles = StyleSheet.create({
 
   cancelBtn: {
     fontSize: 16,
-    color: "#888",
   },
 
   saveBtn: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#007AFF",
   },
 });
