@@ -45,6 +45,20 @@ function getModeInstruction(mode: string) {
 }
 
 export const app = express();
+
+// Vercel serves this app under /api/*; normalize so routes stay /health, /ai/..., etc.
+app.use((req, _res, next) => {
+  const raw = req.url ?? "/";
+  const q = raw.indexOf("?");
+  const pathOnly = q >= 0 ? raw.slice(0, q) : raw;
+  const search = q >= 0 ? raw.slice(q) : "";
+  if (pathOnly === "/api" || pathOnly.startsWith("/api/")) {
+    const nextPath = pathOnly.replace(/^\/api/, "") || "/";
+    (req as { url: string }).url = nextPath + search;
+  }
+  next();
+});
+
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 
