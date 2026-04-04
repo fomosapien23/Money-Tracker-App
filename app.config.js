@@ -15,9 +15,13 @@ module.exports = function appConfig() {
   const placeholder =
     "https://REPLACE_WITH_YOUR_DEPLOYED_BACKEND_URL" === fromEnv;
 
-  if (process.env.EAS_BUILD_PROFILE && (!fromEnv || placeholder)) {
+  const profile = process.env.EAS_BUILD_PROFILE;
+  if (
+    profile === "production" &&
+    (!fromEnv || placeholder)
+  ) {
     throw new Error(
-      "EAS build requires EXPO_PUBLIC_AI_BACKEND_URL: set it under Project → Environment variables " +
+      "Production EAS build requires EXPO_PUBLIC_AI_BACKEND_URL: set it under Project → Environment variables " +
         "in expo.dev (or `eas env:create`) to your deployed HTTPS AI API base URL (no trailing slash).",
     );
   }
