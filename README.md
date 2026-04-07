@@ -176,58 +176,6 @@ Then open in:
 
 ---
 
-## Project Structure
-
-```
-money-app/
-├── src/
-│   ├── app/                        # Expo Router (file-based routing)
-│   │   ├── (tabs)/                 # Main tab navigator
-│   │   │   ├── index.tsx           # Dashboard / home
-│   │   │   ├── add.tsx             # Add transaction screen
-│   │   │   ├── stats.tsx           # Analytics & charts
-│   │   │   └── settings.tsx        # User preferences
-│   │   ├── auth/                   # Authentication screens
-│   │   │   ├── login.tsx
-│   │   │   └── register.tsx
-│   │   └── edit/[id].tsx           # Edit transaction (dynamic route)
-│   ├── features/ai/                # AI agent module
-│   │   ├── useAiInsights.ts        # Hook — fetch & cache AI insights
-│   │   ├── mapper.ts               # Transform transactions → LLM prompt
-│   │   └── types.ts
-│   ├── services/                   # Data access layer
-│   │   ├── aiService.ts            # OpenRouter API calls
-│   │   ├── authService.ts          # Supabase Auth helpers
-│   │   ├── categoryService.ts      # Category CRUD
-│   │   ├── transactionService.ts   # Supabase transaction CRUD
-│   │   └── localTransactions.ts    # Offline / local storage
-│   ├── store/                      # Zustand global state
-│   │   ├── transactionStore.ts
-│   │   └── categoryStore.ts
-│   ├── context/                    # React context providers
-│   │   ├── AuthProvider.tsx
-│   │   └── ThemeContext.tsx
-│   ├── hooks/                      # Shared custom hooks
-│   │   └── useTransactions.ts
-│   ├── constants/                  # App-wide constants
-│   │   ├── config.ts
-│   │   └── defaultCategories.ts
-│   ├── lib/                        # Third-party client setup
-│   ├── storage/                    # Async storage utilities
-│   ├── type/                       # Shared TypeScript types
-│   └── utils/                      # Helper functions
-├── backend/                        # Standalone AI backend (Node / Vercel)
-│   ├── src/server.ts               # Express / serverless entry point
-│   ├── api/lib/app.ts              # Route handlers
-│   └── vercel.json                 # Vercel deployment config
-├── assets/                         # Images, fonts, icons
-├── docs/                           # Project documentation
-├── app.json                        # Expo config
-├── expo-env.d.ts
-└── tsconfig.json
-```
-
----
 
 ## Roadmap
 
