@@ -1,50 +1,267 @@
-# Welcome to your Expo app 👋
+<div align="center">
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<img src="assets\icons\ios-light.png" alt="Money App" width="100" />
 
-## Get started
+# Money App
 
-1. Install dependencies
+**AI-powered personal finance manager for Android, iOS & Web**
 
-   ```bash
-   npm install
-   ```
+[![Built with Expo](https://img.shields.io/badge/Built%20with-Expo-000020?logo=expo&logoColor=white)](https://expo.dev)
+[![React Native](https://img.shields.io/badge/React%20Native-0.76-61DAFB?logo=react&logoColor=white)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-2. Start the app
+[Features](#-features) · [Screenshots](#-screenshots) · [Architecture](#-architecture) · [Getting Started](#-getting-started) · [Contributing](#-contributing)
 
-   ```bash
-   npx expo start
-   ```
+</div>
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Overview
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Money App is a production-grade personal finance tracker built with **React Native + Expo**. It goes beyond simple expense logging — at its core is an **AI agent** that analyzes your spending patterns, delivers actionable budget insights, and coaches you toward your savings goals.
 
-## Get a fresh project
+Designed with a privacy-first approach, all transaction data is owned by the user and securely synced via Supabase. The app works fully offline and is deployable to Android, iOS, and the web from a single codebase.
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
+## Features
+
+### AI-Powered Finance Agent
+The standout capability of Money App is its embedded AI layer, powered by OpenRouter's LLM API. The agent:
+
+- Generates natural-language **spending summaries** at the end of each month
+- Provides **budget coaching** — flags overspending categories and suggests adjustments
+- Delivers **personalized saving tips** based on your actual transaction history
+- Answers ad-hoc finance questions in a conversational interface
+
+### Core Finance Tracking
+- Log **income and expense transactions** with categories, dates, notes, and amounts
+- Create and manage **custom categories** that fit your lifestyle
+- Full **CRUD** on all transactions — edit or delete entries at any time
+
+### Analytics Dashboard
+- **Pie charts** broken down by category for monthly, yearly, and all-time views
+- **Trend lines** showing income vs. expenses over time
+- Key stats: total spend, top categories, average daily spend, savings rate
+
+### Authentication & Cloud Sync
+- Secure sign-up / log-in via **Supabase Auth** (email + password, OAuth ready)
+- Real-time **cloud sync** across devices
+- Row-level security ensures only the authenticated user accesses their data
+
+### Offline-First Architecture
+- Transactions can be **added and browsed without internet**
+- Local state syncs to Supabase automatically when connectivity is restored
+
+### Theming
+- Full **light / dark mode** support
+- Persistent theme preference saved per user
+
+---
+
+## Screenshots
+
+| Dashboard | Analytics | AI Insights |
+|-----------|-----------|-------------|
+| ![Dashboard](./assets/Screenshot_2026-04-08-00-26-39-36_df94dbf6541ce2da665fba9f7447e9fe.jpg) | ![Analytics](./assets/Screenshot_2026-04-08-00-27-00-91_df94dbf6541ce2da665fba9f7447e9fe.jpg) | ![AI](./assets/Screenshot_2026-04-08-00-27-18-02_df94dbf6541ce2da665fba9f7447e9fe.jpg) |
+
+---
+
+## Architecture
+
+```
+Money App
+├── Mobile / Web Client  (src/)
+│   ├── Authentication       → Supabase Auth (JWT-based)
+│   ├── Database             → Supabase Postgres (RLS enforced)
+│   ├── State Management     → Zustand (transactionStore, categoryStore)
+│   ├── Offline Layer        → localTransactions service + AsyncStorage
+│   ├── AI Feature Module    → features/ai — hooks, mappers, types
+│   │   ├── Spending Summaries
+│   │   ├── Budget Coaching
+│   │   └── Savings Tips
+│   ├── Charts               → react-native-gifted-charts
+│   └── Navigation           → Expo Router (file-based) + @expo/vector-icons
+│
+└── AI Backend  (backend/)
+    ├── Node.js / Express server
+    ├── OpenRouter LLM API integration
+    └── Deployed on Vercel
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Tech Stack
 
-## Learn more
+| Layer | Technology |
+|---|---|
+| Framework | React Native + Expo (SDK 52) |
+| Language | TypeScript |
+| Navigation | Expo Router (file-based) |
+| State | Zustand |
+| Backend / Auth | Supabase |
+| AI / LLM | OpenRouter API |
+| Charts | react-native-gifted-charts |
+| Icons | @expo/vector-icons |
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Getting Started
 
-## Join the community
+### Prerequisites
 
-Join our community of developers creating universal apps.
+- Node.js 18+
+- Expo CLI — `npm install -g expo-cli`
+- A [Supabase](https://supabase.com) project
+- An [OpenRouter](https://openrouter.ai) API key
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/your-username/money-app.git
+cd money-app
+
+# 2. Install dependencies
+npm install
+```
+
+### Environment Setup
+
+Create a `.env` file in the project root (or configure `app.json` extra fields):
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+EXPO_PUBLIC_OPENROUTER_API_KEY=your-openrouter-key
+EXPO_PUBLIC_AI_BACKEND_URL=https://your-backend.vercel.app
+```
+
+### Database Setup
+
+Run the following SQL in your Supabase SQL editor to provision the required tables:
+
+```sql
+-- Transactions table
+create table transactions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users not null,
+  type text check (type in ('income', 'expense')) not null,
+  amount numeric not null,
+  category text not null,
+  note text,
+  date date not null,
+  created_at timestamptz default now()
+);
+
+-- Enable Row Level Security
+alter table transactions enable row level security;
+
+create policy "Users can manage their own transactions"
+  on transactions for all
+  using (auth.uid() = user_id);
+```
+
+### Running the App
+
+```bash
+# Start the development server
+npx expo start
+```
+
+Then open in:
+- **Android** — press `a` or scan QR with Expo Go
+- **iOS** — press `i` or scan QR with Expo Go (macOS required for simulator)
+- **Web** — press `w`
+
+---
+
+## Project Structure
+
+```
+money-app/
+├── src/
+│   ├── app/                        # Expo Router (file-based routing)
+│   │   ├── (tabs)/                 # Main tab navigator
+│   │   │   ├── index.tsx           # Dashboard / home
+│   │   │   ├── add.tsx             # Add transaction screen
+│   │   │   ├── stats.tsx           # Analytics & charts
+│   │   │   └── settings.tsx        # User preferences
+│   │   ├── auth/                   # Authentication screens
+│   │   │   ├── login.tsx
+│   │   │   └── register.tsx
+│   │   └── edit/[id].tsx           # Edit transaction (dynamic route)
+│   ├── features/ai/                # AI agent module
+│   │   ├── useAiInsights.ts        # Hook — fetch & cache AI insights
+│   │   ├── mapper.ts               # Transform transactions → LLM prompt
+│   │   └── types.ts
+│   ├── services/                   # Data access layer
+│   │   ├── aiService.ts            # OpenRouter API calls
+│   │   ├── authService.ts          # Supabase Auth helpers
+│   │   ├── categoryService.ts      # Category CRUD
+│   │   ├── transactionService.ts   # Supabase transaction CRUD
+│   │   └── localTransactions.ts    # Offline / local storage
+│   ├── store/                      # Zustand global state
+│   │   ├── transactionStore.ts
+│   │   └── categoryStore.ts
+│   ├── context/                    # React context providers
+│   │   ├── AuthProvider.tsx
+│   │   └── ThemeContext.tsx
+│   ├── hooks/                      # Shared custom hooks
+│   │   └── useTransactions.ts
+│   ├── constants/                  # App-wide constants
+│   │   ├── config.ts
+│   │   └── defaultCategories.ts
+│   ├── lib/                        # Third-party client setup
+│   ├── storage/                    # Async storage utilities
+│   ├── type/                       # Shared TypeScript types
+│   └── utils/                      # Helper functions
+├── backend/                        # Standalone AI backend (Node / Vercel)
+│   ├── src/server.ts               # Express / serverless entry point
+│   ├── api/lib/app.ts              # Route handlers
+│   └── vercel.json                 # Vercel deployment config
+├── assets/                         # Images, fonts, icons
+├── docs/                           # Project documentation
+├── app.json                        # Expo config
+├── expo-env.d.ts
+└── tsconfig.json
+```
+
+---
+
+## Roadmap
+
+- [ ] Budget goal setting with progress tracking
+- [ ] Recurring transaction support
+- [ ] CSV / PDF export
+- [ ] Multi-currency support
+- [ ] Widgets (iOS / Android home screen)
+- [ ] AI-generated monthly finance reports
+
+---
+
+## Contributing
+
+Contributions are welcome. To propose a significant change, please open an issue first to discuss the approach.
+
+```bash
+# Fork the repo, then:
+git checkout -b feature/your-feature-name
+git commit -m "feat: describe your change"
+git push origin feature/your-feature-name
+# Open a Pull Request
+```
+
+Please follow the existing code style (TypeScript strict mode, ESLint config) and include relevant tests where applicable.
+
+---
+
+## License
+
+Distributed under the MIT License. See [`LICENSE`](./LICENSE) for details.
+
+---
+
+<div align="center">
+  <sub>Built with React Native + Expo · Powered by Supabase & OpenRouter</sub>
+</div>
